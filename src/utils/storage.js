@@ -2,6 +2,7 @@ const KEYS = {
   data: 'gymTracker:data',
   progress: 'gymTracker:progress',
   history: 'gymTracker:history',
+  viewMode: 'gymTracker:viewMode',
 }
 
 /** Fecha local en formato YYYY-MM-DD, sin problemas de zona horaria. */
@@ -65,4 +66,14 @@ export function loadHistory() {
 
 export function saveHistory(history) {
   localStorage.setItem(KEYS.history, JSON.stringify(history))
+}
+
+/** Vista recordada entre sesiones: 'list' o 'focus'. */
+export function loadViewMode() {
+  const v = localStorage.getItem(KEYS.viewMode)
+  return v === 'focus' ? 'focus' : 'list'
+}
+
+export function saveViewMode(mode) {
+  localStorage.setItem(KEYS.viewMode, mode)
 }

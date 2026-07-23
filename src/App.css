@@ -46,7 +46,42 @@
 
 .app__content {
   flex: 1;
+  display: flex;
+  flex-direction: column;
   padding: 12px 16px 40px;
+}
+
+/* --- View toggle (Lista / Foco) --- */
+.view-toggle {
+  display: flex;
+  gap: 8px;
+  padding: 12px 16px;
+  background: var(--bg-elevated);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 61px;
+  z-index: 9;
+}
+
+.view-toggle__tab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 18px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-muted);
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.view-toggle__tab.is-active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-contrast);
 }
 
 /* --- Day tabs --- */
@@ -59,8 +94,8 @@
   border-bottom: 1px solid var(--border);
   scrollbar-width: none;
   position: sticky;
-  top: 61px;
-  z-index: 9;
+  top: 121px;
+  z-index: 8;
 }
 
 .day-tabs::-webkit-scrollbar {
@@ -91,8 +126,8 @@
   background: var(--bg-elevated);
   border-bottom: 1px solid var(--border);
   position: sticky;
-  top: 121px;
-  z-index: 8;
+  top: 181px;
+  z-index: 7;
 }
 
 .progress-bar__track {
@@ -310,4 +345,156 @@
   font-weight: 600;
   max-width: 320px;
   margin-top: 8px;
+}
+
+/* --- Focus view --- */
+.focus-view {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
+.focus-view__counter {
+  align-self: center;
+  color: var(--text-muted);
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 0.04em;
+  margin-bottom: 16px;
+}
+
+.focus-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-left: 6px solid var(--block-color, var(--accent));
+  border-radius: var(--radius);
+  padding: 28px 22px;
+  gap: 14px;
+  text-align: left;
+}
+
+.focus-card__block {
+  display: inline-block;
+  align-self: flex-start;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--block-color, var(--accent));
+}
+
+.focus-card__name {
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1.25;
+  word-break: break-word;
+}
+
+.focus-card__meta {
+  font-size: 18px;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.focus-card__description {
+  margin-top: 8px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+.focus-view__actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.focus-view__back {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  padding: 0 18px;
+  border-radius: var(--radius);
+  font-size: 15px;
+  font-weight: 600;
+  min-height: 56px;
+}
+
+.focus-view__back:disabled {
+  visibility: hidden;
+}
+
+.focus-view__back:active {
+  background: var(--bg-card);
+}
+
+.focus-view__done {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: var(--accent);
+  border: none;
+  color: var(--accent-contrast);
+  border-radius: var(--radius);
+  font-size: 17px;
+  font-weight: 700;
+  min-height: 56px;
+}
+
+.focus-view__done:active {
+  background: var(--accent-strong);
+}
+
+.focus-view__complete {
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 10px;
+  padding: 20px 0;
+}
+
+.focus-view__complete-icon {
+  color: var(--accent);
+  margin-bottom: 6px;
+}
+
+.focus-view__complete-title {
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.focus-view__complete-subtitle {
+  color: var(--text-muted);
+  max-width: 300px;
+  line-height: 1.5;
+  margin-bottom: 12px;
+}
+
+.focus-view__complete-btn {
+  background: var(--accent);
+  border: none;
+  color: var(--accent-contrast);
+  padding: 0 28px;
+  min-height: 56px;
+  border-radius: var(--radius);
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.focus-view__complete-btn:active {
+  background: var(--accent-strong);
 }
