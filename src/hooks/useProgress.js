@@ -1,14 +1,20 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { loadProgress, saveProgress, loadHistory, saveHistory, todayStr } from '../utils/storage'
+import { pullCloudState, pushProgress, pushHistory } from '../utils/cloudSync'
 
 /**
  * Maneja el progreso (checkboxes) del día actual y el historial de
  * días completados al 100%, para poder calcular racha de consistencia
- * más adelante.
+ * más adelante. Si hay sesión (userId), además sincroniza con Supabase.
  */
-export function useProgress(workoutData) {
+export function useProgress(workoutData, userId) {
   const [progress, setProgress] = useState(() => loadProgress())
   const [history, setHistory] = useState(() => loadHistory())
+
+  const progressRef = useRef(progress)
+  progressRef.current = progress
+  const historyRef = useRef(history)
+  historyRef.current = history
 
   // Si la app queda abierta y cruza la medianoche, se resetea el progreso
   // igual que si se reabriera un día distinto.
@@ -20,13 +26,42 @@ export function useProgress(workoutData) {
     return () => clearInterval(interval)
   }, [])
 
+  // Al loguearse: si hay progreso/historial en la nube gana la nube; si no
+  // hay fila remota todavía y sí había datos de invitado, se migran
+  // subiéndolos.
+  useEffect(() => {
+    if (!userId) return
+    let cancelled = false
+    pullCloudState(userId).then((cloud) => {
+      if (cancelled || !cloud) return
+
+      if (cloud.progress) {
+        const today = todayStr()
+        setProgress(cloud.progress.date === today ? cloud.progress : { date: today, checked: {} })
+      } else if (Object.keys(progressRef.current.checked).length) {
+        pushProgress(userId, progressRef.current)
+      }
+
+      if (cloud.history.length) {
+        setHistory(cloud.history)
+      } else if (historyRef.current.length) {
+        pushHistory(userId, historyRef.current)
+      }
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [userId])
+
   useEffect(() => {
     saveProgress(progress)
-  }, [progress])
+    if (userId) pushProgress(userId, progress)
+  }, [progress, userId])
 
   useEffect(() => {
     saveHistory(history)
-  }, [history])
+    if (userId) pushHistory(userId, history)
+  }, [history, userId])
 
   const toggleExercise = useCallback((dayId, exerciseId) => {
     setProgress((prev) => {
