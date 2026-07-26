@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { parseWorkoutExcel } from '../utils/excelParser'
 import { loadWorkoutData, saveWorkoutData, clearWorkoutData } from '../utils/storage'
 import { pullCloudState, pushRoutine } from '../utils/cloudSync'
+import { normalizeRoutine } from '../domain/routine'
 
 /**
  * Maneja la carga del Excel, su parseo y persistencia en localStorage
@@ -47,7 +48,7 @@ export function useWorkoutData(userId) {
     setLoading(true)
     try {
       const days = await parseWorkoutExcel(file)
-      const data = { fileName: file.name, days }
+      const data = normalizeRoutine({ fileName: file.name, days })
       saveWorkoutData(data)
       setWorkoutData(data)
     } catch (e) {

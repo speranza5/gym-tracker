@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { X, FileSpreadsheet } from 'lucide-react'
+import { X, FileSpreadsheet, Plug } from 'lucide-react'
 import { AuthButton } from './AuthButton'
 
 /**
@@ -7,7 +7,16 @@ import { AuthButton } from './AuthButton'
  * (cuenta y cambio de archivo). Pensado como una lista de ítems para
  * poder sumar secciones nuevas (ej: API key) sin rediseñarlo.
  */
-export function SideMenu({ open, onClose, user, authLoading, onSignIn, onSignOut, onChangeFile }) {
+export function SideMenu({
+  open,
+  onClose,
+  user,
+  authLoading,
+  onSignIn,
+  onSignOut,
+  onChangeFile,
+  onOpenTracker,
+}) {
   useEffect(() => {
     if (!open) return
     const handleKeyDown = (e) => {
@@ -19,6 +28,11 @@ export function SideMenu({ open, onClose, user, authLoading, onSignIn, onSignOut
 
   const handleChangeFile = () => {
     onChangeFile()
+    onClose()
+  }
+
+  const handleOpenTracker = () => {
+    onOpenTracker()
     onClose()
   }
 
@@ -47,6 +61,13 @@ export function SideMenu({ open, onClose, user, authLoading, onSignIn, onSignOut
           <FileSpreadsheet size={18} />
           <span>Cambiar archivo</span>
         </button>
+
+        {user && (
+          <button type="button" className="side-menu__item" onClick={handleOpenTracker}>
+            <Plug size={18} />
+            <span>Open Tracker</span>
+          </button>
+        )}
       </aside>
     </>
   )

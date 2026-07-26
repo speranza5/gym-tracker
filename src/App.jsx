@@ -7,6 +7,7 @@ import { ExerciseList } from './components/ExerciseList'
 import { ViewToggle } from './components/ViewToggle'
 import { FocusView } from './components/FocusView'
 import { SideMenu } from './components/SideMenu'
+import { OpenTracker } from './components/OpenTracker'
 import { useWorkoutData } from './hooks/useWorkoutData'
 import { useProgress } from './hooks/useProgress'
 import { useAuth } from './hooks/useAuth'
@@ -21,6 +22,7 @@ function App() {
   const [activeDayId, setActiveDayId] = useState(null)
   const [viewMode, setViewMode] = useState(() => loadViewMode())
   const [menuOpen, setMenuOpen] = useState(false)
+  const [screen, setScreen] = useState('routine')
 
   useEffect(() => {
     saveViewMode(viewMode)
@@ -48,6 +50,10 @@ function App() {
         onSignOut={signOut}
       />
     )
+  }
+
+  if (screen === 'open-tracker') {
+    return <OpenTracker user={user} onBack={() => setScreen('routine')} />
   }
 
   const activeDay = workoutData.days.find((d) => d.id === activeDayId) || workoutData.days[0]
@@ -115,6 +121,7 @@ function App() {
         onSignIn={signInWithGoogle}
         onSignOut={signOut}
         onChangeFile={handleChangeFile}
+        onOpenTracker={() => setScreen('open-tracker')}
       />
     </>
   )

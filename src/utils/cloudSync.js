@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabaseClient'
+import { toRoutineRow, fromRoutineRow } from '../domain/routine'
 
 /**
  * Puente entre el estado local (localStorage) y las tablas de Supabase.
@@ -8,16 +9,14 @@ import { supabase } from '../lib/supabaseClient'
 export async function pullCloudState(userId) {
   try {
     const [routineRes, progressRes, historyRes] = await Promise.all([
-      supabase.from('routines').select('file_name, days').eq('user_id', userId).maybeSingle(),
+      supabase.from('routines').select('file_name, days, updated_at').eq('user_id', userId).maybeSingle(),
       supabase.from('progress').select('date, checked').eq('user_id', userId).maybeSingle(),
       supabase.from('history').select('date, day_id, day_name').eq('user_id', userId),
     ])
     if (routineRes.error || progressRes.error || historyRes.error) return null
 
     return {
-      routine: routineRes.data
-        ? { fileName: routineRes.data.file_name, days: routineRes.data.days }
-        : null,
+      routine: routineRes.data ? fromRoutineRow(routineRes.data) : null,
       progress: progressRes.data
         ? { date: progressRes.data.date, checked: progressRes.data.checked }
         : null,
@@ -34,12 +33,7 @@ export async function pullCloudState(userId) {
 
 export async function pushRoutine(userId, workoutData) {
   try {
-    await supabase.from('routines').upsert({
-      user_id: userId,
-      file_name: workoutData.fileName,
-      days: workoutData.days,
-      updated_at: new Date().toISOString(),
-    })
+    await supabase.from('routines').upsert(toRoutineRow(userId, workoutData))
   } catch {
     // sin conexión u otro error transitorio: se reintenta en el próximo cambio
   }
