@@ -49,7 +49,11 @@ frontend.
 | API Keys por usuario (una, no expira) | ✅ | `src/utils/apiKeys.js`, tabla `api_keys` |
 | Pantalla "Open Tracker" en el menú (solo logueado) | ✅ | `src/components/OpenTracker.jsx` |
 | Rate limiting (60 req/min) | ✅ | `netlify/functions/_lib/rateLimit.js` |
-| Dominio compartido Excel ↔ API | ✅ | `src/domain/routine.js` |
+| Dominio compartido Excel ↔ API (Zod) | ✅ | `src/domain/routine.js` |
+| Spec OpenAPI público (`GET /api/v1/openapi.json`), generado desde Zod | ✅ | `netlify/functions/_lib/openapiSpec.js`, `netlify/functions/openapi.js` |
+| Open Tracker como developer hub (Credentials, Developer Resources, Future Integrations) | ✅ | `src/components/OpenTracker.jsx` |
+| API Playground interactivo (Scalar, pre-autenticado, lazy-loaded) | ✅ | `src/components/openTracker/Playground.jsx` |
+| Quick Start (curl + fetch, con Base URL/API Key reales) | ✅ | `src/components/openTracker/QuickStart.jsx` |
 
 ## Funcionalidades pendientes (explícitamente fuera de alcance hasta ahora)
 
@@ -58,9 +62,10 @@ frontend.
   `src/domain/routine.js` (esa función de resumen tampoco existe todavía,
   hay que escribirla).
 - `POST /api/v1/routine/validate` — no implementado, pero trivial: envolver
-  `assertValidRoutine` (ya existe) en una Function nueva.
+  `assertValidRoutine` (ya existe) en una Function nueva. También trivial
+  de documentar en el spec de OpenAPI (`_lib/openapiSpec.js`) y de exponer
+  en el Playground una vez que exista la Function.
 - Regeneración de API Key.
-- Documentación interactiva de la API (ej. Swagger/OpenAPI UI).
 - El servidor MCP (`gym-tracker-mcp`) — repositorio separado, no empezado.
 - Migrar el frontend para que consuma su propia API en vez de hablar
   directo con Supabase (ver decisión 9 en `decisions.md`).
@@ -88,6 +93,11 @@ Resumen — el detalle completo con alternativas y motivos está en
    a Supabase. Es intencional, no un olvido.
 10. `src/domain/routine.js` es la única fuente de verdad de "qué es una
     rutina válida" — la usan el importador de Excel y la API por igual.
+11. El spec de OpenAPI se genera desde esos mismos schemas de Zod
+    (`@asteasolutions/zod-to-openapi`), no se escribe a mano.
+12. El Playground interactivo usa Scalar, no Swagger UI — mucho más
+    liviano y con pre-auth de Bearer token más directa; se carga con
+    `React.lazy` para no pesar en el bundle principal.
 
 ## Convenciones del proyecto
 
@@ -135,6 +145,15 @@ Resumen — el detalle completo con alternativas y motivos está en
 - **Sin regeneración ni expiración de API Keys.**
 - **Rate limiting simple** (ventana fija, no sliding window) — puede
   permitir ráfagas de hasta 2x el límite justo en el borde de una ventana.
+- **`src/domain/routine.js` se reescribió con Zod sin tests automatizados
+  como red de seguridad** — se verificó manualmente con casos puntuales
+  (ver `decisions.md` #11), pero un cambio futuro a esos schemas debería
+  ir acompañado de, como mínimo, agregar los tests que todavía no existen.
+- **`@scalar/api-reference-react` trae dependencias de Vue** (es un
+  detalle interno de cómo está implementado Scalar, no una decisión de
+  este proyecto) — inflan `node_modules` pero no el bundle del navegador
+  gracias al lazy-load; si esto llegara a ser un problema real, reevaluar
+  contra Swagger UI (ver `decisions.md` #12).
 
 ## Próximos pasos recomendados
 

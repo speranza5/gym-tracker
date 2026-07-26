@@ -12,6 +12,30 @@ scripts y futuras integraciones (incluyendo el futuro servidor MCP
   incompatible se publica como `/api/v2/...` sin tocar `/api/v1`, así que
   los clientes existentes nunca se rompen por una evolución futura.
 
+## Documentación interactiva
+
+- **Spec máquina:** `GET /api/v1/openapi.json` — documento OpenAPI 3.0,
+  público (sin autenticación), generado en cada request desde los mismos
+  schemas de [Zod](https://zod.dev/) que validan `PUT /api/v1/routine`
+  (`src/domain/routine.js` + `netlify/functions/_lib/openapiSpec.js`, vía
+  [`@asteasolutions/zod-to-openapi`](https://github.com/asteasolutions/zod-to-openapi)).
+  No hay un spec mantenido a mano por separado — por construcción no puede
+  divergir del código que realmente valida los requests.
+- **Playground:** dentro de la app, menú lateral → **Open Tracker** →
+  Developer Resources → **API Playground** (una vez logueado). Renderiza
+  ese mismo spec con [Scalar](https://github.com/scalar/scalar)
+  (`@scalar/api-reference-react`), pre-autenticado con tu propia API Key —
+  se puede explorar y **ejecutar requests reales** sin copiar/pegar nada.
+  Ver la decisión de por qué Scalar y no Swagger UI/Redoc en
+  [`decisions.md`](./decisions.md#12-scalar-en-vez-de-swagger-ui-para-el-playground).
+
+Esta referencia escrita (`api.md`) y el Playground **se complementan**: acá
+hay contexto y explicaciones en prosa; el Playground es para explorar y
+probar interactivamente. No se duplica información a propósito — los
+ejemplos de `curl` de abajo son para quien lee este archivo sin abrir la
+app; la pantalla "Quick Start" de Open Tracker tiene los mismos ejemplos
+pero con tu Base URL y tu API Key reales ya completadas.
+
 ## Autenticación
 
 Cada usuario de Gym Tracker tiene una única API Key (visible en la app, menú

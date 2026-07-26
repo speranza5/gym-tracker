@@ -267,3 +267,83 @@ duplicada"); además dejarlo así hace trivial agregar
 **Consecuencias:** cualquier cambio a "qué es una rutina válida" se hace en
 un solo lugar y automáticamente afecta a ambos transportes — es el
 resultado buscado.
+
+---
+
+## 11. Zod como fuente de verdad del spec de OpenAPI (no un spec escrito a mano)
+
+**Contexto:** al construir el "API Playground" de Open Tracker había que
+elegir de dónde sale la especificación OpenAPI que lo alimenta. Un spec
+escrito a mano (YAML/JSON separado) diverge del código apenas alguien
+cambia `src/domain/routine.js` sin acordarse de actualizarlo también.
+
+**Decisión:** `src/domain/routine.js` reemplazó su validación hecha a mano
+por schemas de [Zod](https://zod.dev/) (`ExerciseSchema`, `DaySchema`,
+`RoutineInputSchema`). Esos mismos schemas se reusan en
+`netlify/functions/_lib/openapiSpec.js` para generar el documento OpenAPI
+vía [`@asteasolutions/zod-to-openapi`](https://github.com/asteasolutions/zod-to-openapi) —
+una sola definición de "qué es una rutina válida" sirve para validar en
+runtime **y** para documentar.
+
+**Alternativas consideradas:**
+- Anotar a mano con JSDoc + `swagger-jsdoc` — sigue separando "la
+  validación" de "el spec" en dos lugares distintos (código vs.
+  comentarios), mismo riesgo de divergencia que escribirlo a mano, solo
+  que más disimulado.
+- Mantener el spec como un YAML/JSON versionado a mano — descartada por la
+  razón de arriba: es exactamente lo que la plataforma quería evitar.
+
+**Motivos:** por construcción, el spec **no puede** divergir de la
+validación real — están hechos del mismo objeto. `zod-to-openapi` existe
+específicamente para este caso de uso (su propio README lo dice
+explícitamente).
+
+**Consecuencias:** `zod` (~4) pasó a ser una dependencia del bundle del
+navegador además del servidor (es chica, sin dependencias propias — el
+build midió un incremento de ~16 KB gzip en el bundle principal).
+`@asteasolutions/zod-to-openapi` es server-side only (nunca se importa
+desde `src/`). Un detalle no obvio de implementación: `extendZodWithOpenApi(z)`
+no parchea retroactivamente schemas ya construidos — tiene que correr
+antes de que `src/domain/routine.js` se evalúe por primera vez en el
+proceso, por eso `openapiSpec.js` lo importa con un `import()` dinámico
+después de llamar `extendZodWithOpenApi`, en vez de un `import` estático
+normal (los imports estáticos de ES modules se resuelven antes que el
+cuerpo del archivo que los declara).
+
+---
+
+## 12. Scalar en vez de Swagger UI para el Playground
+
+**Contexto:** había que elegir qué renderiza la documentación interactiva
+("Playground") a partir del spec de OpenAPI, con soporte real para
+ejecutar requests y autenticarse con la API Key del usuario con la menor
+fricción posible.
+
+**Decisión:** [`@scalar/api-reference-react`](https://github.com/scalar/scalar)
+(`ApiReferenceReact`), con `configuration.authentication.securitySchemes.bearerAuth.token`
+pre-cargado con la key real del usuario.
+
+**Alternativas consideradas:**
+- **Swagger UI** (`swagger-ui-react`) — la opción "de siempre". Medido en
+  el registro de npm: **~7.3 MB sin comprimir**. Soporta "try it out", pero
+  la API exacta de pre-autenticación (`preauthorizeApiKey`) es menos
+  directa para un scheme `http bearer` y varía entre versiones.
+- **Redoc** — buena referencia visual, pero su versión gratuita no ejecuta
+  requests reales ("try it out"); no cumplía el requisito explícito de
+  poder "ejecutar requests directamente".
+
+**Motivos:** Scalar mide **~382 KB sin comprimir — 19x más liviano** que
+Swagger UI (confirmado en el registro de npm), soporta ejecución real de
+requests, y su configuración de autenticación con Bearer token está
+documentada de forma directa y explícita — justo lo que pedía "menor
+fricción posible".
+
+**Consecuencias:** el paquete internamente usa Vue (no React) por debajo
+del wrapper `api-reference-react` — es un detalle de implementación de
+Scalar, invisible desde nuestro código, pero explica por qué `npm install`
+trajo dependencias de Vue al proyecto. El componente se carga con
+`React.lazy` (`src/components/openTracker/Playground.jsx`) para que su
+peso (~443 KB de JS + ~250 KB de CSS, verificado en el build) nunca forme
+parte del bundle principal de la app de uso diario — confirmado en build
+que ambos quedan en chunks separados, cargados solo al abrir el
+Playground.

@@ -1,25 +1,44 @@
+import { z } from 'zod'
+
 /**
  * Modelo de dominio de la rutina, compartido por el importador de Excel
  * (navegador), la API REST (Netlify Functions) y, a futuro, el servidor MCP.
  * Sin dependencias de React, del navegador ni de Supabase — funciones puras.
  *
- * @typedef {object} Exercise
- * @property {string} id
- * @property {string} block
- * @property {string} name
- * @property {string} series
- * @property {string} repsTime
- * @property {string} description
- *
- * @typedef {object} Day
- * @property {string} id
- * @property {string} name
- * @property {Exercise[]} exercises
- *
- * @typedef {object} Routine
- * @property {string|null} fileName
- * @property {Day[]} days
+ * Los schemas de Zod de acá abajo son la única definición de "qué es una
+ * rutina válida": la usan tanto `assertValidRoutine`/`normalizeRoutine` para
+ * validar en runtime como `netlify/functions/_lib/openapiSpec.js` para
+ * generar el spec de OpenAPI — no hay una segunda copia de estas reglas.
  */
+
+// Coerce a texto libre igual que antes de introducir Zod: null/undefined
+// se convierten en '' (no error), cualquier otro valor se castea con
+// String() y se recorta — nunca rechaza un valor por su tipo.
+const freeText = z.preprocess((v) => (v == null ? '' : String(v).trim()), z.string())
+
+// Requerido: tiene que ser un string no vacío después de recortar espacios
+// (un string de solo espacios se considera vacío, igual que antes).
+const requiredId = z.string().trim().min(1)
+
+export const ExerciseSchema = z.object({
+  id: requiredId,
+  name: requiredId,
+  block: freeText,
+  series: freeText,
+  repsTime: freeText,
+  description: freeText,
+})
+
+export const DaySchema = z.object({
+  id: requiredId,
+  name: requiredId,
+  exercises: z.array(ExerciseSchema),
+})
+
+export const RoutineInputSchema = z.object({
+  fileName: z.preprocess((v) => (v == null ? null : v), z.string().trim().nullable()),
+  days: z.array(DaySchema).min(1),
+})
 
 export class RoutineValidationError extends Error {
   constructor(issues) {
@@ -29,8 +48,20 @@ export class RoutineValidationError extends Error {
   }
 }
 
-function isNonEmptyString(value) {
-  return typeof value === 'string' && value.trim().length > 0
+function formatPath(path) {
+  return path.reduce((acc, segment, i) => {
+    if (typeof segment === 'number') return `${acc}[${segment}]`
+    return i === 0 ? String(segment) : `${acc}.${segment}`
+  }, '')
+}
+
+function formatZodError(error) {
+  return error.issues.map((issue) => {
+    const path = formatPath(issue.path)
+    if (!path) return 'el body debe ser un objeto con al menos "days"'
+    if (path === 'days') return '"days" debe ser un array con al menos un día'
+    return `${path}: ${issue.message}`
+  })
 }
 
 /**
@@ -39,77 +70,25 @@ function isNonEmptyString(value) {
  * @param {unknown} input
  */
 export function assertValidRoutine(input) {
-  const issues = []
-
-  if (!input || typeof input !== 'object') {
-    throw new RoutineValidationError(['el body debe ser un objeto con al menos "days"'])
-  }
-
-  if (input.fileName != null && typeof input.fileName !== 'string') {
-    issues.push('"fileName" debe ser un string u omitirse')
-  }
-
-  if (!Array.isArray(input.days) || input.days.length === 0) {
-    issues.push('"days" debe ser un array con al menos un día')
-  } else {
-    input.days.forEach((day, dayIndex) => {
-      if (!day || typeof day !== 'object') {
-        issues.push(`days[${dayIndex}] debe ser un objeto`)
-        return
-      }
-      if (!isNonEmptyString(day.id)) issues.push(`days[${dayIndex}].id debe ser un string no vacío`)
-      if (!isNonEmptyString(day.name)) issues.push(`days[${dayIndex}].name debe ser un string no vacío`)
-      if (!Array.isArray(day.exercises)) {
-        issues.push(`days[${dayIndex}].exercises debe ser un array`)
-        return
-      }
-      day.exercises.forEach((exercise, exIndex) => {
-        if (!exercise || typeof exercise !== 'object') {
-          issues.push(`days[${dayIndex}].exercises[${exIndex}] debe ser un objeto`)
-          return
-        }
-        if (!isNonEmptyString(exercise.id)) {
-          issues.push(`days[${dayIndex}].exercises[${exIndex}].id debe ser un string no vacío`)
-        }
-        if (!isNonEmptyString(exercise.name)) {
-          issues.push(`days[${dayIndex}].exercises[${exIndex}].name debe ser un string no vacío`)
-        }
-      })
-    })
-  }
-
-  if (issues.length) throw new RoutineValidationError(issues)
+  const result = RoutineInputSchema.safeParse(input)
+  if (!result.success) throw new RoutineValidationError(formatZodError(result.error))
 }
 
 /**
  * Valida y normaliza una rutina candidata a su forma canónica.
  * @param {unknown} input
- * @returns {Routine}
+ * @returns {import('zod').infer<typeof RoutineInputSchema>}
  */
 export function normalizeRoutine(input) {
-  assertValidRoutine(input)
-
-  return {
-    fileName: input.fileName != null ? String(input.fileName).trim() : null,
-    days: input.days.map((day) => ({
-      id: String(day.id).trim(),
-      name: String(day.name).trim(),
-      exercises: day.exercises.map((exercise) => ({
-        id: String(exercise.id).trim(),
-        name: String(exercise.name).trim(),
-        block: exercise.block != null ? String(exercise.block).trim() : '',
-        series: exercise.series != null ? String(exercise.series).trim() : '',
-        repsTime: exercise.repsTime != null ? String(exercise.repsTime).trim() : '',
-        description: exercise.description != null ? String(exercise.description).trim() : '',
-      })),
-    })),
-  }
+  const result = RoutineInputSchema.safeParse(input)
+  if (!result.success) throw new RoutineValidationError(formatZodError(result.error))
+  return result.data
 }
 
 /**
  * Mapea una Routine (DTO público) a la forma de fila de la tabla `routines`.
  * @param {string} userId
- * @param {Routine} routine
+ * @param {{fileName: string|null, days: unknown}} routine
  */
 export function toRoutineRow(userId, routine) {
   return {
@@ -122,8 +101,7 @@ export function toRoutineRow(userId, routine) {
 
 /**
  * Mapea una fila de la tabla `routines` a su DTO público.
- * @param {{file_name: string|null, days: Day[], updated_at?: string}} row
- * @returns {Routine & {updatedAt: string|null}}
+ * @param {{file_name: string|null, days: unknown, updated_at?: string}} row
  */
 export function fromRoutineRow(row) {
   return {

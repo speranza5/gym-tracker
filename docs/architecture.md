@@ -54,7 +54,9 @@ mismas funciones puras de `src/domain/routine.js`.
 ## Qué pertenece al dominio y qué no
 
 **Pertenece a `src/domain/routine.js`:**
-- La forma canónica de una rutina (`Routine`, `Day`, `Exercise`).
+- La forma canónica de una rutina (`Routine`, `Day`, `Exercise`), expresada
+  como schemas de [Zod](https://zod.dev/) (`ExerciseSchema`, `DaySchema`,
+  `RoutineInputSchema`).
 - Qué hace que una rutina sea válida (`assertValidRoutine`).
 - Cómo se normaliza un input externo (`normalizeRoutine`).
 - El mapeo entre el DTO público y la fila de la tabla `routines`
@@ -66,6 +68,11 @@ mismas funciones puras de `src/domain/routine.js`.
   "qué es un dato válido".
 - Autenticar un request HTTP, leer el header `Authorization`, aplicar
   rate limiting → son preocupaciones de transporte (`netlify/functions/_lib/`).
+- Anotar los schemas con metadata de OpenAPI (ejemplos, descripciones,
+  security schemes) → eso vive en `netlify/functions/_lib/openapiSpec.js`,
+  que **reusa** los schemas del dominio pero no los modifica — la
+  documentación es un detalle de transporte, no de negocio (ver
+  [`decisions.md` #11](./decisions.md#11-zod-como-fuente-de-verdad-del-spec-de-openapi-no-un-spec-escrito-a-mano)).
 - Cómo se guarda en `localStorage` vs. cómo se sincroniza con Supabase
   desde el navegador → es infraestructura de persistencia del lado
   cliente (`src/utils/storage.js`, `src/utils/cloudSync.js`), no reglas de
@@ -213,6 +220,15 @@ El detalle completo, con alternativas y trade-offs, está en
   existente, portable y testeable con `netlify dev` + `curl`.
 - **El frontend no migra a la API todavía** — sigue hablando directo con
   Supabase; migrar es un paso futuro, no parte de esta iteración.
+- **El spec de OpenAPI se genera desde los mismos schemas de Zod que
+  validan la API** (`@asteasolutions/zod-to-openapi`), no se mantiene a
+  mano — expuesto públicamente y sin autenticación en
+  `GET /api/v1/openapi.json` (documento, no dato de usuario; no necesita
+  rate limit porque no toca la base de datos).
+- **Scalar (`@scalar/api-reference-react`), no Swagger UI**, para el
+  Playground interactivo de Open Tracker — mucho más liviano (~19x) y con
+  soporte directo para pre-autenticar con la API Key del usuario. Se carga
+  con `React.lazy` para no afectar el bundle principal de la app.
 
 ## Limitaciones conocidas
 

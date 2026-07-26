@@ -51,7 +51,11 @@
 
 **Organización de carpetas:**
 - `src/components/` — UI pura (React), sin acceso a Supabase ni reglas de
-  negocio.
+  negocio. Es plano salvo que una sola feature acumule varias sub-vistas
+  propias (ej. `src/components/openTracker/` para Playground/Quick Start) —
+  ahí sí se agrupan en una subcarpeta para no ensuciar el directorio
+  principal. No crear subcarpetas "por si acaso": solo cuando una feature
+  ya tiene 3+ componentes propios.
 - `src/hooks/` — estado de React y orquestación (cuándo leer/guardar).
 - `src/domain/` — funciones puras de negocio, sin dependencias externas.
 - `src/utils/` — adaptadores de transporte/infraestructura (Excel,
