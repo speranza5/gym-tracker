@@ -214,16 +214,15 @@ El detalle completo, con alternativas y trade-offs, está en
 - **El frontend no migra a la API todavía** — sigue hablando directo con
   Supabase; migrar es un paso futuro, no parte de esta iteración.
 
-## Inconsistencias conocidas entre documentación y código
+## Limitaciones conocidas
 
-- El código de Open Tracker (`src/domain/`, `netlify/functions/`,
-  `src/components/OpenTracker.jsx`, `src/utils/apiKeys.js`, y los cambios
-  relacionados en `useWorkoutData.js`/`cloudSync.js`/`SideMenu.jsx`) está
-  **implementado y desplegado en producción**, pero **todavía no está
-  commiteado a git** al momento de escribir este documento — el último
-  commit (`ea5383a`) es anterior a Open Tracker. Ver
-  [`handoff.md`](./handoff.md) para el estado exacto.
 - No hay tests automatizados en el proyecto (ni unitarios ni de
   integración) — toda la verificación hasta ahora fue manual (`npm run
   lint`, `npm run build`, pruebas con `curl` contra `netlify dev` y contra
-  producción).
+  producción). Ver deuda técnica completa en [`handoff.md`](./handoff.md).
+
+Si en algún momento encontrás una discrepancia real entre esta
+documentación y el código (un campo, un flujo, un comportamiento que ya no
+coincide), documentala acá explícitamente en vez de corregir el código en
+silencio — puede ser la documentación la que quedó desactualizada, o
+puede ser un bug real; cualquiera de los dos casos merece quedar anotado.

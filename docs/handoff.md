@@ -21,12 +21,13 @@ frontend.
 
 - **Deployado en producción:** `https://gym-tracker.carlossperanza.fyi`
   (Netlify, sitio `gym-tracker-425`), incluyendo la API de Open Tracker.
-- **Git:** el último commit (`ea5383a`, "Add Google login + Supabase sync,
-  and a side menu for routine settings") es **anterior** a todo el código
-  de Open Tracker. Es decir: **hay código implementado, verificado y
-  desplegado en producción que todavía no está commiteado a git.** Si
-  estás retomando este proyecto, lo primero es revisar `git status` y
-  decidir si commitear lo pendiente antes de seguir.
+- **Git:** todo commiteado y pusheado a `origin/main` (código de Open
+  Tracker + esta documentación). El sitio de Netlify está **conectado a
+  GitHub para CI/CD** — cada push a `main` dispara build y deploy
+  automático; ya no hace falta correr `netlify deploy --prod` a mano (ver
+  [`README.md`](../README.md#cómo-desplegarlo)). Si estás retomando este
+  proyecto, igual arrancá con `git status` para confirmar que sigue así —
+  esta sección puede quedar desactualizada.
 - **Sin tests automatizados** (ni unitarios ni de integración). Toda la
   verificación hecha hasta ahora fue manual: `npm run lint`, `npm run
   build`, y pruebas con `curl` contra `netlify dev` (local) y contra
@@ -124,7 +125,6 @@ Resumen — el detalle completo con alternativas y motivos está en
 
 ## Deuda técnica conocida
 
-- **Código sin commitear:** todo Open Tracker (ver "Estado actual" arriba).
 - **Sin tests.**
 - **Dos caminos de escritura a la tabla `routines`** (frontend vía RLS, API
   vía service role) — aceptado como trade-off (decisión 9), pero es
@@ -141,15 +141,13 @@ Resumen — el detalle completo con alternativas y motivos está en
 En orden sugerido (ver [`roadmap.md`](./roadmap.md) para el marco
 completo):
 
-1. Commitear el trabajo de Open Tracker pendiente en git (o confirmar con
-   el usuario si prefiere seguir sin commitear).
-2. Evaluar agregar tests mínimos para `src/domain/routine.js` (es la pieza
+1. Evaluar agregar tests mínimos para `src/domain/routine.js` (es la pieza
    más crítica y más fácil de testear por ser funciones puras).
-3. Implementar `POST /api/v1/routine/validate` (bajo esfuerzo, reusa
+2. Implementar `POST /api/v1/routine/validate` (bajo esfuerzo, reusa
    `assertValidRoutine`).
-4. Implementar `GET /api/v1/routine/summary` (requiere escribir la función
+3. Implementar `GET /api/v1/routine/summary` (requiere escribir la función
    de resumen en el dominio primero).
-5. Empezar el repositorio `gym-tracker-mcp` como adaptador delgado sobre
+4. Empezar el repositorio `gym-tracker-mcp` como adaptador delgado sobre
    esta API (no antes de tener al menos `validate` y `summary`, para que el
    MCP tenga algo más que `getRoutine`/`replaceRoutine` para exponer).
 

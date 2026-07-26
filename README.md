@@ -62,7 +62,7 @@ de un usuario.
 | Backend / API        | Netlify Functions v2 (Deno/Node, formato `Request`/`Response` web-estándar) |
 | Base de datos + Auth | [Supabase](https://supabase.com/) (Postgres + Row Level Security + Auth con Google OAuth) |
 | Lint                 | [oxlint](https://oxc.rs/) |
-| Hosting / Deploy     | Netlify (sitio estático + Functions), deploy manual vía Netlify CLI |
+| Hosting / Deploy     | Netlify (sitio estático + Functions), CI/CD automático desde GitHub (rama `main`) |
 
 No hay backend propio "tradicional": toda la lógica server-side vive en
 Netlify Functions, y toda la persistencia vive en Supabase.
@@ -185,17 +185,27 @@ técnica en [`docs/handoff.md`](./docs/handoff.md)).
 ## Cómo desplegarlo
 
 El sitio (`gym-tracker-425` en Netlify, dominio `gym-tracker.carlossperanza.fyi`)
-**no** está conectado a Git para CI/CD — los deploys son manuales vía CLI:
+está **conectado a GitHub para CI/CD**: cada push a `main` dispara
+automáticamente un build (`npm run build`) y deploy en Netlify, incluyendo
+las Netlify Functions (`netlify/functions/`). No hace falta correr nada a
+mano — `git push` alcanza.
+
+```bash
+git push origin main
+```
+
+Deploy manual (por ejemplo para probar algo sin commitear, o si el deploy
+automático no está disponible) sigue siendo posible vía CLI:
 
 ```bash
 npm run build
 netlify deploy --prod --dir=dist
 ```
 
-Esto sube tanto el sitio estático como las Netlify Functions
-(`netlify/functions/`). Antes del primer deploy con Open Tracker hace falta
-haber seteado `SUPABASE_SERVICE_ROLE_KEY` con `netlify env:set` (ver
-[Variables de entorno](#variables-de-entorno)).
+Antes del primer deploy con Open Tracker hace falta haber seteado
+`SUPABASE_SERVICE_ROLE_KEY` con `netlify env:set` (ver
+[Variables de entorno](#variables-de-entorno)) — esto es independiente de
+si el deploy es automático o manual.
 
 ## Roadmap de alto nivel
 

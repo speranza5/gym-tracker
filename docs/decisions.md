@@ -118,12 +118,18 @@ función (`export const config = { path: '/api/v1/routine' }`).
   real dado el volumen esperado (uso personal + agentes).
 
 **Motivos:** cero infraestructura nueva, mismo dominio, mismo flujo de
-deploy (`netlify deploy --prod`) que ya se usaba.
+deploy que ya se usaba.
 
 **Consecuencias:** el proyecto queda atado a las capacidades y límites de
 Netlify Functions (timeouts, cold starts, límites de tamaño de bundle). Si
 en el futuro la API necesita procesos de larga duración o WebSockets, esta
 decisión habría que revisarla.
+
+**Actualización:** al momento de tomar esta decisión, el deploy era manual
+vía `netlify deploy --prod --dir=dist`. El sitio luego se conectó a GitHub
+para CI/CD (push a `main` dispara build + deploy automático) — no cambia
+la decisión de usar Netlify Functions, solo el mecanismo de disparo del
+deploy. Ver [`README.md`](../README.md#cómo-desplegarlo).
 
 ---
 
