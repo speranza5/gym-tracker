@@ -56,10 +56,11 @@ frontend.
 | Rate limiting (60 req/min) | ✅ | `netlify/functions/_lib/rateLimit.js` |
 | Dominio compartido Excel ↔ API (Zod) | ✅ | `src/domain/routine.js` |
 | Spec OpenAPI público (`GET /api/v1/openapi.json`), generado desde Zod | ✅ | `netlify/functions/_lib/openapiSpec.js`, `netlify/functions/openapi.js` |
-| Open Tracker como developer hub (Credentials, Developer Resources, Future Integrations) | ✅ | `src/components/OpenTracker.jsx` |
+| Open Tracker como developer hub (Credentials, Developer Resources) | ✅ | `src/components/OpenTracker.jsx` |
 | API Playground interactivo (Scalar, pre-autenticado, lazy-loaded) | ✅ | `src/components/openTracker/Playground.jsx` |
 | Quick Start (curl + fetch, con Base URL/API Key reales) | ✅ | `src/components/openTracker/QuickStart.jsx` |
 | Endpoints internos para `gym-tracker-mcp` (identidad + resolución de API Key) | ✅ | `netlify/functions/mcp-identity.js`, `mcp-api-key.js`, `_lib/apiKeys.js` |
+| Guía "Conectar MCP" en Open Tracker (pasos para Claude y ChatGPT) | ✅ | `src/components/openTracker/ConnectMcp.jsx` |
 
 ## Funcionalidades pendientes (explícitamente fuera de alcance hasta ahora)
 

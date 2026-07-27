@@ -47,8 +47,8 @@ dominio compartido con el importador de Excel. Ver [`api.md`](./api.md).
 
 Open Tracker pasa de ser una pantalla de credenciales a un developer hub
 (estilo Stripe/Supabase/Vercel/Resend): Credentials (Base URL + API Key
-con copiar), Developer Resources (Playground, Reference, Quick Start) y
-una sección "Future Integrations" con el MCP Server como "Coming Soon".
+con copiar) y Developer Resources (Playground, Reference, Quick Start,
+y la guía "Conectar MCP" agregada en la Etapa 7).
 El **Playground** es interactivo de verdad — corre sobre un spec de
 OpenAPI generado desde los mismos schemas de Zod que valida la API
 (nunca un spec mantenido a mano), renderizado con Scalar y
@@ -65,16 +65,20 @@ pre-autenticado con la API Key real del usuario. Ver
 - Regeneración de API Key (y, con eso, revisar la decisión de guardarla en
   texto plano — ver `decisions.md` #7).
 
-## Etapa 7 — Servidor MCP (`gym-tracker-mcp`) 🔜
+## Etapa 7 — Servidor MCP (`gym-tracker-mcp`) ✅
 
-Repositorio separado. Debe ser un **adaptador delgado**: traduce
-herramientas MCP a llamadas HTTP contra esta API, sin lógica de negocio
-propia ni acceso directo a la base de datos. Herramientas previstas:
+Repositorio separado. Es un **adaptador delgado**: traduce herramientas
+MCP a llamadas HTTP contra esta API, sin lógica de negocio propia ni
+acceso directo a la base de datos. Implementado, desplegado (local stdio
++ remoto vía Netlify Function con OAuth 2.1 + DCR y login real de Google,
+reusando la Supabase Auth de este mismo proyecto) y con una guía de
+conexión ("Conectar MCP") en la sección Open Tracker de esta app.
+Herramientas:
 
-- `getRoutine()` → `GET /api/v1/routine`
-- `replaceRoutine()` → `PUT /api/v1/routine`
-- `getRoutineSummary()` → `GET /api/v1/routine/summary` (cuando exista)
-- `validateRoutine()` → `POST /api/v1/routine/validate` (cuando exista)
+- `getRoutine()` → `GET /api/v1/routine` ✅
+- `replaceRoutine()` → `PUT /api/v1/routine` ✅
+- `getRoutineSummary()` → `GET /api/v1/routine/summary` (pendiente de la Etapa 6)
+- `validateRoutine()` → `POST /api/v1/routine/validate` (pendiente de la Etapa 6)
 
 ## Etapa 8 — Historial y analytics avanzados 💭
 

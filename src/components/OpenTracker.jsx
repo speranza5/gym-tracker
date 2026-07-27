@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect, useState } from 'react'
 import { ChevronLeft, Copy, Check, Plug, BookOpen, FileText, Rocket, Bot } from 'lucide-react'
 import { getOrCreateApiKey } from '../utils/apiKeys'
 import { QuickStart } from './openTracker/QuickStart'
+import { ConnectMcp } from './openTracker/ConnectMcp'
 
 const Playground = lazy(() => import('./openTracker/Playground'))
 
@@ -73,6 +74,10 @@ export function OpenTracker({ user, onBack }) {
     return <QuickStart baseUrl={baseUrl} apiKey={apiKey} onBack={() => setView('hub')} />
   }
 
+  if (view === 'connect-mcp') {
+    return <ConnectMcp onBack={() => setView('hub')} />
+  }
+
   if (view === 'playground') {
     return (
       <div className="open-tracker open-tracker--playground">
@@ -137,22 +142,12 @@ export function OpenTracker({ user, onBack }) {
               description="Ejemplos listos para copiar (curl, fetch)"
               onClick={() => setView('quickstart')}
             />
-          </div>
-        </section>
-
-        <section className="open-tracker__section">
-          <h3 className="open-tracker__section-title">Future Integrations</h3>
-          <div className="open-tracker__coming-soon">
-            <span className="open-tracker__coming-soon-icon">
-              <Bot size={20} />
-            </span>
-            <div>
-              <div className="open-tracker__coming-soon-title">MCP Server</div>
-              <p className="open-tracker__coming-soon-desc">
-                Connect Claude Desktop, Cursor and other MCP-compatible clients.
-              </p>
-            </div>
-            <span className="open-tracker__coming-soon-badge">Coming Soon</span>
+            <ResourceCard
+              icon={<Bot size={18} />}
+              title="Conectar MCP"
+              description="Guía para conectar Claude o ChatGPT a tu cuenta"
+              onClick={() => setView('connect-mcp')}
+            />
           </div>
         </section>
       </main>

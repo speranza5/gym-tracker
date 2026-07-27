@@ -18,9 +18,9 @@ adelante es una checklist diaria con seguimiento de racha.
 
 Es, además, la base de una plataforma más amplia: **Open Tracker**, una API
 REST versionada y autenticada por API Key pensada para que no solo el
-frontend, sino también agentes de IA (Claude, ChatGPT, Gemini, etc.), un
-futuro servidor MCP, SDKs o apps móviles, puedan leer y escribir la rutina
-de un usuario.
+frontend, sino también agentes de IA (Claude, ChatGPT, Gemini, etc.) vía
+el servidor MCP (`gym-tracker-mcp`), SDKs o apps móviles, puedan leer y
+escribir la rutina de un usuario.
 
 ## Objetivo
 
@@ -29,9 +29,9 @@ de un usuario.
 2. **Mediano plazo:** que quien quiera sincronizar entre dispositivos pueda
    loguearse con Google y tener su rutina/progreso/historial en la nube.
 3. **Largo plazo (Open Tracker):** que la rutina de un usuario sea accesible
-   y editable por cualquier integración externa autorizada — empezando por
-   un futuro servidor MCP (`gym-tracker-mcp`) que consuma esta misma API sin
-   duplicar ninguna lógica de negocio.
+   y editable por cualquier integración externa autorizada — incluyendo el
+   servidor MCP (`gym-tracker-mcp`) que consume esta misma API sin duplicar
+   ninguna lógica de negocio.
 
 ## Características principales
 
@@ -84,7 +84,7 @@ flowchart LR
     subgraph Datos
         SB[(Supabase: Postgres + Auth)]
     end
-    AGENTS[Agentes externos / futuro MCP]
+    AGENTS[Agentes externos / gym-tracker-mcp]
 
     UI -- sube .xlsx --> EXCEL --> DOM
     UI -- lee/escribe con sesión --> SB
