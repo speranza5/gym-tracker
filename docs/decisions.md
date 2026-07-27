@@ -347,3 +347,61 @@ peso (~443 KB de JS + ~250 KB de CSS, verificado en el build) nunca forme
 parte del bundle principal de la app de uso diario — confirmado en build
 que ambos quedan en chunks separados, cargados solo al abrir el
 Playground.
+
+---
+
+## 13. Endpoints internos para el authorization server de `gym-tracker-mcp`
+
+**Contexto:** `gym-tracker-mcp` (repo separado, servidor MCP) quería
+reemplazar su gate de OAuth de "una API Key compartida de un solo dueño"
+por un login real de Google, resolviendo automáticamente qué cuenta de
+Gym Tracker corresponde a esa sesión — sin que ese repo tuviera que
+acceder a Supabase directamente (su principio explícito es no tener
+acceso directo a la base). Hacía falta que `gym-tracker` expusiera esa
+capacidad de alguna forma.
+
+**Decisión:** dos Netlify Functions nuevas, fuera del contrato público
+`/api/v1` (no aparecen en `docs/api.md` ni en el spec de OpenAPI):
+
+- `GET /internal/mcp/identity` (`netlify/functions/mcp-identity.js`):
+  recibe `Authorization: Bearer <supabase_access_token>` (una sesión real
+  de Supabase Auth, la misma que usa el login con Google de la app),
+  la verifica con `getSupabaseAdmin().auth.getUser(token)`, garantiza
+  (get-or-create) que exista una fila en `api_keys` para ese usuario
+  (`netlify/functions/_lib/apiKeys.js`, espejo server-side de
+  `src/utils/apiKeys.js`), y devuelve **solo** `{userId, email}` — nunca
+  la API Key. CORS restringido a `https://gym-tracker-mcp.netlify.app`
+  (el único llamador legítimo desde un navegador).
+- `POST /internal/mcp/api-key` (`netlify/functions/mcp-api-key.js`):
+  server-to-server únicamente, gateado por un secreto compartido
+  (`MCP_SERVICE_SECRET`, header `X-Mcp-Service-Secret`, comparado con
+  `crypto.timingSafeEqual`), sin CORS. Dado un `userId`, devuelve la API
+  Key real de esa cuenta.
+
+**Alternativas consideradas:**
+- **Sumar esto al contrato público `/api/v1`** — descartada: son
+  endpoints con un único caller conocido (`gym-tracker-mcp`) y semántica
+  muy distinta a la API de rutinas; mezclarlos en el mismo spec de
+  OpenAPI/Playground público confundiría a cualquier desarrollador
+  externo real.
+- **Que `gym-tracker-mcp` tuviera su propia copia de la service role key
+  de Supabase** — descartada de plano: la service role key bypasea RLS
+  por completo; darle esa llave a un segundo repo multiplica el radio de
+  impacto de cualquier fuga sin necesidad, cuando dos endpoints acotados
+  alcanzan.
+- **Devolver la API Key directamente en `/internal/mcp/identity`** (un
+  solo endpoint en vez de dos) — descartada: ese endpoint lo llama el
+  navegador (para mostrar el email antes de consentir); la API Key real
+  nunca debería estar disponible client-side bajo ningún flujo.
+
+**Motivos:** mantiene `gym-tracker-mcp` fiel a su propio principio ("sin
+acceso directo a Supabase") sin que este repo tenga que exponer más
+superficie de la estrictamente necesaria — dos endpoints angostos, cada
+uno con un solo propósito y un solo caller esperado.
+
+**Consecuencias:** `MCP_SERVICE_SECRET` puede resolver la API Key de
+**cualquier** `user_id` — se trata con el mismo cuidado operativo que
+`SUPABASE_SERVICE_ROLE_KEY` (solo en `netlify env`, nunca logueado,
+`timingSafeEqual` en la comparación). Ver el detalle completo del flujo
+del lado de `gym-tracker-mcp` en
+[`gym-tracker-mcp/docs/decisions.md` #11](../../gym-tracker-mcp/docs/decisions.md#11-consentimiento-vía-login-real-de-google-supabase-auth-no-una-api-key-compartida).

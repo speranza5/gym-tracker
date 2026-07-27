@@ -32,6 +32,11 @@ frontend.
   verificación hecha hasta ahora fue manual: `npm run lint`, `npm run
   build`, y pruebas con `curl` contra `netlify dev` (local) y contra
   producción.
+- **`gym-tracker-mcp` (repo separado) ya existe y está deployado**, tanto
+  local (stdio) como remoto (`https://gym-tracker-mcp.netlify.app/mcp`,
+  OAuth 2.1 + DCR con login real de Google). Este repo (`gym-tracker`)
+  expone dos endpoints internos que ese servidor necesita —
+  `mcp-identity.js`, `mcp-api-key.js` — ver `decisions.md` #13.
 
 ## Funcionalidades implementadas
 
@@ -54,6 +59,7 @@ frontend.
 | Open Tracker como developer hub (Credentials, Developer Resources, Future Integrations) | ✅ | `src/components/OpenTracker.jsx` |
 | API Playground interactivo (Scalar, pre-autenticado, lazy-loaded) | ✅ | `src/components/openTracker/Playground.jsx` |
 | Quick Start (curl + fetch, con Base URL/API Key reales) | ✅ | `src/components/openTracker/QuickStart.jsx` |
+| Endpoints internos para `gym-tracker-mcp` (identidad + resolución de API Key) | ✅ | `netlify/functions/mcp-identity.js`, `mcp-api-key.js`, `_lib/apiKeys.js` |
 
 ## Funcionalidades pendientes (explícitamente fuera de alcance hasta ahora)
 
@@ -66,7 +72,6 @@ frontend.
   de documentar en el spec de OpenAPI (`_lib/openapiSpec.js`) y de exponer
   en el Playground una vez que exista la Function.
 - Regeneración de API Key.
-- El servidor MCP (`gym-tracker-mcp`) — repositorio separado, no empezado.
 - Migrar el frontend para que consuma su propia API en vez de hablar
   directo con Supabase (ver decisión 9 en `decisions.md`).
 - Tests automatizados (no hay ninguno todavía).
@@ -98,6 +103,10 @@ Resumen — el detalle completo con alternativas y motivos está en
 12. El Playground interactivo usa Scalar, no Swagger UI — mucho más
     liviano y con pre-auth de Bearer token más directa; se carga con
     `React.lazy` para no pesar en el bundle principal.
+13. Dos endpoints internos (`mcp-identity.js`, `mcp-api-key.js`), fuera del
+    contrato público `/api/v1`, para que `gym-tracker-mcp` resuelva
+    identidad real de usuario y su API Key sin acceder a Supabase
+    directamente — el segundo gateado por `MCP_SERVICE_SECRET`.
 
 ## Convenciones del proyecto
 
@@ -132,6 +141,12 @@ Resumen — el detalle completo con alternativas y motivos está en
   dependen de esto (o los habrá, con el MCP).
 - **No** asumir que el frontend es el único cliente de la API al diseñar
   nuevos endpoints — pensarlos para consumidores externos primero.
+- **No** hacer que `mcp-identity.js` devuelva la API Key real (solo
+  `{userId, email}`) — ese endpoint lo llama un navegador; la API Key
+  vive únicamente detrás de `mcp-api-key.js`, gateado por
+  `MCP_SERVICE_SECRET`, server-to-server (ver `decisions.md` #13).
+- **No** aflojar el CORS de `mcp-api-key.js` (hoy sin CORS en absoluto) —
+  ese endpoint no debería ser alcanzable nunca desde un navegador.
 
 ## Deuda técnica conocida
 
@@ -165,10 +180,12 @@ completo):
 2. Implementar `POST /api/v1/routine/validate` (bajo esfuerzo, reusa
    `assertValidRoutine`).
 3. Implementar `GET /api/v1/routine/summary` (requiere escribir la función
-   de resumen en el dominio primero).
-4. Empezar el repositorio `gym-tracker-mcp` como adaptador delgado sobre
-   esta API (no antes de tener al menos `validate` y `summary`, para que el
-   MCP tenga algo más que `getRoutine`/`replaceRoutine` para exponer).
+   de resumen en el dominio primero) y `validate`/`summary` en
+   `gym-tracker-mcp` una vez que existan acá.
+4. Confirmar en el dashboard de Supabase que
+   `https://gym-tracker-mcp.netlify.app/oauth/authorize` está en la lista
+   de Redirect URLs permitidas (Auth → URL Configuration) — sin eso, el
+   login con Google del conector remoto no completa el flujo.
 
 **Antes de encarar cualquier cambio grande:** seguí el proceso descrito en
 [`CONTRIBUTING_AI.md`](./CONTRIBUTING_AI.md#cómo-proponer-cambios-grandes)

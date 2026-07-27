@@ -17,6 +17,7 @@ flowchart TB
         EXCEL["Importador de Excel<br/>(src/utils/excelParser.js)"]
         UI["Hooks de React<br/>(useWorkoutData, useProgress)"]
         API["Netlify Functions<br/>(netlify/functions/routine.js)"]
+        INTERNAL["Netlify Functions internas<br/>(mcp-identity.js, mcp-api-key.js)"]
     end
 
     DOMAIN["Dominio compartido<br/>(src/domain/routine.js)<br/>validar · normalizar · mapear"]
@@ -31,8 +32,10 @@ flowchart TB
     API --> DOMAIN
     DOMAIN --> LOCAL
     DOMAIN --> SB
+    INTERNAL --> SB
 
-    AGENT["Agente externo / futuro MCP"] -- "Bearer API Key" --> API
+    AGENT["gym-tracker-mcp (servidor MCP)"] -- "Bearer API Key" --> API
+    MCPOAUTH["gym-tracker-mcp OAuth server<br/>(oauth-authorize.ts, mcp.ts)"] -- "sesión Supabase / MCP_SERVICE_SECRET" --> INTERNAL
     BROWSER["Navegador (sesión Supabase)"] -- "anon key + RLS" --> SB
 ```
 
@@ -49,6 +52,7 @@ mismas funciones puras de `src/domain/routine.js`.
 | **Dominio** | `src/domain/` | Reglas de negocio puras: validar, normalizar, mapear DTO ↔ fila de DB. Sin efectos secundarios, sin I/O. | No sabe nada de HTTP, React, Excel ni Supabase. |
 | **Utils (transporte/infra)** | `src/utils/` | Adaptadores: parsear Excel, sincronizar con Supabase desde el navegador, `localStorage`, generar API Keys. | No implementan reglas de negocio propias — llaman al dominio. |
 | **Netlify Functions** | `netlify/functions/` | Transporte HTTP: parsear el request, autenticar, rate-limit, formatear la respuesta. | No contienen reglas de "qué es válido" — llaman al dominio. |
+| **Netlify Functions internas** | `netlify/functions/mcp-identity.js`, `mcp-api-key.js` | Soportan el authorization server OAuth de `gym-tracker-mcp`: verificar una sesión de Supabase y resolver la API Key real de un usuario, server-to-server. | No forman parte del contrato público `/api/v1` (ver `docs/api.md`) — no tienen Playground ni aparecen en el spec de OpenAPI. |
 | **Supabase** | externo | Persistencia (Postgres), autenticación (Google OAuth), autorización de bajo nivel (RLS). | No contiene lógica de aplicación (solo constraints/RLS). |
 
 ## Qué pertenece al dominio y qué no
@@ -78,7 +82,16 @@ mismas funciones puras de `src/domain/routine.js`.
   cliente (`src/utils/storage.js`, `src/utils/cloudSync.js`), no reglas de
   negocio.
 - Generar y almacenar una API Key → es un dato de cuenta
-  (`src/utils/apiKeys.js`), no parte del contrato público de la rutina.
+  (`src/utils/apiKeys.js`, con un espejo server-side en
+  `netlify/functions/_lib/apiKeys.js` para poder llamarse desde una
+  Function sin sesión de navegador), no parte del contrato público de la
+  rutina.
+- Resolver identidad de Google/Supabase o la API Key real para el
+  authorization server de `gym-tracker-mcp` → vive en
+  `netlify/functions/mcp-identity.js`/`mcp-api-key.js`, **fuera** del
+  contrato público `/api/v1` — son endpoints internos, no documentados en
+  `docs/api.md` ni expuestos en el spec de OpenAPI (ver
+  [`decisions.md` #13](./decisions.md#13-endpoints-internos-para-el-authorization-server-de-gym-tracker-mcp)).
 
 ## Flujo de datos: importar un Excel (con sesión iniciada)
 
@@ -229,6 +242,10 @@ El detalle completo, con alternativas y trade-offs, está en
   Playground interactivo de Open Tracker — mucho más liviano (~19x) y con
   soporte directo para pre-autenticar con la API Key del usuario. Se carga
   con `React.lazy` para no afectar el bundle principal de la app.
+- **Dos endpoints internos nuevos** (`mcp-identity.js`, `mcp-api-key.js`)
+  para que `gym-tracker-mcp` resuelva identidad real de usuario (login de
+  Google) y la API Key correspondiente, sin que ese repo acceda nunca a
+  Supabase directamente — ver [`decisions.md` #13](./decisions.md#13-endpoints-internos-para-el-authorization-server-de-gym-tracker-mcp).
 
 ## Limitaciones conocidas
 
