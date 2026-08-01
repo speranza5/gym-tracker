@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { ChevronLeft, Check, PartyPopper } from 'lucide-react'
 import { FocusCard } from './FocusCard'
 
@@ -7,12 +7,21 @@ function firstPendingIndex(day, checkedSet) {
   return index === -1 ? day.exercises.length : index
 }
 
-export function FocusView({ day, checkedSet, onToggle, onExitToList }) {
+export function FocusView({ day, checkedSet, onToggle, onExitToList, getBenchmark, showWeight }) {
   const [index, setIndex] = useState(() => firstPendingIndex(day, checkedSet))
+  const [weightInput, setWeightInput] = useState('')
+
+  // Al cambiar de ejercicio, precarga el input con su último benchmark.
+  useEffect(() => {
+    const exercise = day.exercises[index]
+    if (!exercise) return
+    const benchmark = getBenchmark?.(exercise.name)
+    setWeightInput(benchmark != null ? String(benchmark) : '')
+  }, [index, day, getBenchmark])
 
   const handleComplete = () => {
     const exercise = day.exercises[index]
-    if (!checkedSet.has(exercise.id)) onToggle(exercise.id)
+    if (!checkedSet.has(exercise.id)) onToggle(exercise.id, exercise.name, weightInput)
     setIndex((i) => i + 1)
   }
 
@@ -44,7 +53,12 @@ export function FocusView({ day, checkedSet, onToggle, onExitToList }) {
         {index + 1} / {day.exercises.length}
       </span>
 
-      <FocusCard exercise={day.exercises[index]} />
+      <FocusCard
+        exercise={day.exercises[index]}
+        weightKg={weightInput}
+        onWeightChange={setWeightInput}
+        showWeight={showWeight}
+      />
 
       <div className="focus-view__actions">
         <button

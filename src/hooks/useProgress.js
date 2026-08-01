@@ -1,15 +1,19 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { loadProgress, saveProgress, loadHistory, saveHistory, todayStr } from '../utils/storage'
-import { pullCloudState, pushProgress, pushHistory } from '../utils/cloudSync'
+import { pullCloudState, pushProgress, pushHistory, pushBenchmark } from '../utils/cloudSync'
+import { normalizeExerciseName } from '../domain/routine'
 
 /**
  * Maneja el progreso (checkboxes) del día actual y el historial de
  * días completados al 100%, para poder calcular racha de consistencia
- * más adelante. Si hay sesión (userId), además sincroniza con Supabase.
+ * más adelante. Si hay sesión (userId), además sincroniza con Supabase y
+ * maneja el benchmark de peso por ejercicio (Etapa 8) — sin sesión no hay
+ * benchmarks, es la primera feature de la app que requiere login.
  */
 export function useProgress(workoutData, userId) {
   const [progress, setProgress] = useState(() => loadProgress())
   const [history, setHistory] = useState(() => loadHistory())
+  const [benchmarks, setBenchmarks] = useState({})
 
   const progressRef = useRef(progress)
   progressRef.current = progress
@@ -30,7 +34,12 @@ export function useProgress(workoutData, userId) {
   // hay fila remota todavía y sí había datos de invitado, se migran
   // subiéndolos.
   useEffect(() => {
-    if (!userId) return
+    if (!userId) {
+      // Sin sesión no hay benchmarks — se limpian para no arrastrar los de
+      // un usuario anterior si alguien se desloguea en el mismo dispositivo.
+      setBenchmarks({})
+      return
+    }
     let cancelled = false
     pullCloudState(userId).then((cloud) => {
       if (cancelled || !cloud) return
@@ -47,6 +56,8 @@ export function useProgress(workoutData, userId) {
       } else if (historyRef.current.length) {
         pushHistory(userId, historyRef.current)
       }
+
+      setBenchmarks(cloud.benchmarks || {})
     })
     return () => {
       cancelled = true
@@ -63,14 +74,43 @@ export function useProgress(workoutData, userId) {
     if (userId) pushHistory(userId, history)
   }, [history, userId])
 
-  const toggleExercise = useCallback((dayId, exerciseId) => {
-    setProgress((prev) => {
-      const current = new Set(prev.checked[dayId] || [])
-      if (current.has(exerciseId)) current.delete(exerciseId)
-      else current.add(exerciseId)
-      return { ...prev, checked: { ...prev.checked, [dayId]: Array.from(current) } }
-    })
-  }, [])
+  const setBenchmark = useCallback(
+    (exerciseName, weightKg) => {
+      if (!userId) return
+      const key = normalizeExerciseName(exerciseName)
+      const numeric = Number(weightKg)
+      if (!key || Number.isNaN(numeric)) return
+      setBenchmarks((prev) => ({ ...prev, [key]: numeric }))
+      pushBenchmark(userId, key, numeric)
+    },
+    [userId]
+  )
+
+  const getBenchmark = useCallback(
+    (exerciseName) => {
+      const key = normalizeExerciseName(exerciseName)
+      return key in benchmarks ? benchmarks[key] : null
+    },
+    [benchmarks]
+  )
+
+  // El peso solo se guarda junto con la acción de marcar como hecho (no al
+  // tipear ni al destildar) — ver docs/etapa-8-analisis.md.
+  const toggleExercise = useCallback(
+    (dayId, exerciseId, exerciseName, weightKg) => {
+      const wasChecked = (progressRef.current.checked[dayId] || []).includes(exerciseId)
+      setProgress((prev) => {
+        const current = new Set(prev.checked[dayId] || [])
+        if (current.has(exerciseId)) current.delete(exerciseId)
+        else current.add(exerciseId)
+        return { ...prev, checked: { ...prev.checked, [dayId]: Array.from(current) } }
+      })
+      if (!wasChecked && weightKg !== '' && weightKg != null) {
+        setBenchmark(exerciseName, weightKg)
+      }
+    },
+    [setBenchmark]
+  )
 
   const resetDay = useCallback((dayId) => {
     setProgress((prev) => ({ ...prev, checked: { ...prev.checked, [dayId]: [] } }))
@@ -107,5 +147,14 @@ export function useProgress(workoutData, userId) {
     })
   }, [progress, workoutData])
 
-  return { progress, history, toggleExercise, resetDay, getDayChecked, getDayPercent }
+  return {
+    progress,
+    history,
+    benchmarks,
+    toggleExercise,
+    resetDay,
+    getDayChecked,
+    getDayPercent,
+    getBenchmark,
+  }
 }

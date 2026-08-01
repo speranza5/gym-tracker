@@ -17,7 +17,11 @@ import './App.css'
 function App() {
   const { user, loading: authLoading, signInWithGoogle, signOut } = useAuth()
   const { workoutData, uploadFile, error, loading, resetWorkoutData } = useWorkoutData(user?.id)
-  const { toggleExercise, resetDay, getDayChecked, getDayPercent } = useProgress(workoutData, user?.id)
+  const { toggleExercise, resetDay, getDayChecked, getDayPercent, getBenchmark } = useProgress(
+    workoutData,
+    user?.id
+  )
+  const showWeight = Boolean(user)
 
   const [activeDayId, setActiveDayId] = useState(null)
   const [viewMode, setViewMode] = useState(() => loadViewMode())
@@ -96,7 +100,11 @@ function App() {
               <ExerciseList
                 day={activeDay}
                 checkedSet={checkedSet}
-                onToggle={(exerciseId) => toggleExercise(activeDay.id, exerciseId)}
+                onToggle={(exerciseId, exerciseName, weightKg) =>
+                  toggleExercise(activeDay.id, exerciseId, exerciseName, weightKg)
+                }
+                getBenchmark={getBenchmark}
+                showWeight={showWeight}
               />
             </main>
           </>
@@ -106,8 +114,12 @@ function App() {
               key={activeDay.id}
               day={activeDay}
               checkedSet={checkedSet}
-              onToggle={(exerciseId) => toggleExercise(activeDay.id, exerciseId)}
+              onToggle={(exerciseId, exerciseName, weightKg) =>
+                toggleExercise(activeDay.id, exerciseId, exerciseName, weightKg)
+              }
               onExitToList={() => setViewMode('list')}
+              getBenchmark={getBenchmark}
+              showWeight={showWeight}
             />
           </main>
         )}

@@ -405,3 +405,35 @@ uno con un solo propósito y un solo caller esperado.
 `timingSafeEqual` en la comparación). Ver el detalle completo del flujo
 del lado de `gym-tracker-mcp` en
 [`gym-tracker-mcp/docs/decisions.md` #11](../../gym-tracker-mcp/docs/decisions.md#11-consentimiento-vía-login-real-de-google-supabase-auth-no-una-api-key-compartida).
+
+---
+
+## 14. Benchmark de peso por ejercicio requiere login (excepción puntual a la ADR #1)
+
+**Contexto:** la Etapa 8 (ver [`roadmap.md`](./roadmap.md) y
+[`etapa-8-analisis.md`](./etapa-8-analisis.md)) agrega un campo de peso
+por ejercicio, guardado en una tabla nueva (`exercise_benchmarks`) para
+que el usuario vea qué carga usó la última vez. Es la primera
+funcionalidad de la app que **no** funciona en modo invitado.
+
+**Decisión:** el campo de peso no se muestra en absoluto sin sesión
+(`showWeight = Boolean(user)` en `App.jsx`, mismo patrón `{user && (...)}`
+que ya gatea el ítem de Open Tracker en `SideMenu.jsx`) — no un campo
+deshabilitado con un cartel, directamente ausente.
+
+**Alternativas consideradas:**
+- Guardar el benchmark también en `localStorage` para invitados, sin
+  sync — descartada: un benchmark que desaparece si el usuario cambia de
+  dispositivo o borra datos del navegador contradice la idea misma de
+  "benchmark" (algo que se espera que persista).
+
+**Motivos:** la ADR #1 sigue vigente como decisión general ("login
+opcional, no obligatorio") — esto no la revierte, es una excepción acotada
+a una sola feature nueva, donde el valor de la feature (comparar contra un
+historial) depende inherentemente de que los datos persistan más allá de
+un dispositivo/sesión de invitado.
+
+**Consecuencias:** a partir de acá, cualquier feature que dependa de
+`exercise_benchmarks` o de `training_sessions` (Etapa 9, mismo criterio)
+hereda este mismo requisito de login — no hace falta repetir esta
+decisión, solo referenciarla.

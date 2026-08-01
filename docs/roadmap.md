@@ -17,9 +17,15 @@ timeline
     Etapa 5 : Open Tracker Developer Platform (Playground, Reference, Quick Start)
     Etapa 6 : Endpoints adicionales (summary, validate)
     Etapa 7 : Servidor MCP (gym-tracker-mcp)
-    Etapa 8 : Historial y analytics avanzados
-    Etapa 9 : SDKs oficiales
-    Etapa 10 : App mobile
+    Etapa 8 : Registro de peso por ejercicio (benchmark)
+    Etapa 9 : Registro de sesión de entrenamiento
+    Etapa 10 : Sección de estadísticas (consistencia semanal/mensual/anual)
+    Etapa 11 : Progresión de cargas por ejercicio (gráficos)
+    Etapa 12 : Landing pública + login obligatorio
+    Etapa 13 : Empty state para usuario logueado sin rutina
+    Etapa 14 : Welcome tour de primer login
+    Etapa 15 : Endpoints y herramientas MCP de progreso
+    Etapa 16 : App mobile
 ```
 
 ## Etapa 1 — MVP: Excel + checklist diaria ✅
@@ -80,21 +86,79 @@ Herramientas:
 - `getRoutineSummary()` → `GET /api/v1/routine/summary` (pendiente de la Etapa 6)
 - `validateRoutine()` → `POST /api/v1/routine/validate` (pendiente de la Etapa 6)
 
-## Etapa 8 — Historial y analytics avanzados 💭
+## Etapa 8 — Registro de peso por ejercicio (benchmark) 💭
 
-Ideas todavía no comprometidas: tendencias de consistencia a lo largo del
-tiempo, progresión de cargas/series por ejercicio, comparación entre
-semanas/meses. Depende de cuánto historial estructurado se decida guardar
-más allá de la tabla `history` actual (que hoy solo registra días
-completados al 100%, no series/pesos por ejercicio).
+Agregar un campo de peso (y opcionalmente series/reps hechas) por
+ejercicio, capturable tanto en modo lista (`ExerciseCard.jsx`) como en modo
+foco (`FocusCard.jsx`), para que el usuario vea qué carga usó la última
+vez y tenga un benchmark. Requiere extender el modelo de dominio
+(`src/domain/routine.js`) — hoy `ExerciseSchema` no tiene ningún campo
+numérico, solo texto descriptivo (`series`, `repsTime` son strings libres
+del Excel, no datos capturados por el usuario).
 
-## Etapa 9 — SDKs oficiales 💭
+## Etapa 9 — Registro de sesión de entrenamiento 💭
 
-Wrappers finos sobre `/api/v1` en JS/TS y Python, para que integrar Gym
-Tracker desde otro proyecto no requiera reimplementar el cliente HTTP a
-mano.
+Al llegar al final de la rutina en modo foco (pantalla "¡Día completado!"
+en `FocusView.jsx`) — y considerar si también en modo lista al llegar al
+100% en `ProgressBar.jsx` — ofrecer la opción explícita de "registrar la
+sesión": guardar una foto del día (ejercicios hechos, pesos de la Etapa 8,
+fecha) en una tabla nueva (ej. `training_sessions`), distinta de `history`
+(que hoy es solo un marcador de racha vía `date/day_id/day_name`, sin
+detalle real de qué se entrenó).
 
-## Etapa 10 — App mobile 💭
+## Etapa 10 — Sección de estadísticas 💭
+
+Pantalla nueva (un `screen` adicional en `App.jsx`, como ya existe
+`'open-tracker'`) para ver consistencia semanal/mensual/anual (días
+completados vs. planificados) y qué ejercicios se entrenan con más
+frecuencia. Depende por completo de la Etapa 9: sin sesiones registradas
+no hay de dónde sacar estos números.
+
+## Etapa 11 — Progresión de cargas por ejercicio 💭
+
+Dentro de la sección de estadísticas (Etapa 10), gráfico de evolución del
+peso usado en un ejercicio a lo largo del tiempo. Se separa de la Etapa 10
+porque suma una dependencia nueva al frontend (no hay ninguna librería de
+gráficos en el proyecto todavía) y es más esfuerzo que un resumen numérico.
+
+## Etapa 12 — Landing pública + login obligatorio 💭
+
+Cambio de comportamiento importante: hoy la app funciona completa en modo
+invitado (ver Etapa 2 — "sin romper el modo invitado"), todo en
+`localStorage`, sin cuenta. Esta etapa lo revierte: sin sesión, en vez de
+la app, se muestra una landing explicando qué es Gym Tracker (una app de
+bienestar "AI-friendly") y sus beneficios, con el login como único camino
+para entrar. Vale la pena registrar esto como una ADR nueva en
+`decisions.md` antes de tocar código, porque contradice una decisión ya
+tomada y documentada en la Etapa 2.
+
+## Etapa 13 — Empty state para usuario logueado sin rutina 💭
+
+Hoy, sin `workoutData`, cualquier usuario (invitado o logueado) ve la
+misma pantalla (`FileUpload.jsx`) con un dropzone de Excel. Con el login
+ya obligatorio (Etapa 12), sumar dos caminos más al dropzone: descargar
+una plantilla `.xlsx` lista para llenar, o ir directo a la guía "Conectar
+MCP" (ya existe en `ConnectMcp.jsx`) para completarla por chat con un
+asistente de IA en vez de a mano.
+
+## Etapa 14 — Welcome tour de primer login 💭
+
+Recorrido guiado (tooltips/spotlight sobre el empty state de la Etapa 13)
+que se muestra una sola vez, la primera vez que un usuario nuevo inicia
+sesión. Depende de la Etapa 13 porque recorre justamente esas opciones
+nuevas.
+
+## Etapa 15 — Endpoints y herramientas MCP de progreso 💭
+
+Nuevos endpoints en la API pública (ej. `GET /api/v1/progress/summary`) y
+las herramientas MCP correspondientes en
+`gym-tracker-mcp/src/mcp/server.ts` (hoy solo tiene `getRoutine` /
+`replaceRoutine`) para que un asistente de IA conectado pueda responder
+algo como "¿cómo vengo con mi rutina?" con datos reales. Depende de las
+Etapas 9 a 11: sin sesiones ni estadísticas guardadas del lado de
+gym-tracker, no hay nada que exponer.
+
+## Etapa 16 — App mobile 💭
 
 No definido si sería una app nativa, una PWA instalable, o un wrapper tipo
 Capacitor/Expo sobre el mismo frontend. En cualquier caso, consumiría la

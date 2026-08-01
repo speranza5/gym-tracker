@@ -8,12 +8,13 @@ import { toRoutineRow, fromRoutineRow } from '../domain/routine'
  */
 export async function pullCloudState(userId) {
   try {
-    const [routineRes, progressRes, historyRes] = await Promise.all([
+    const [routineRes, progressRes, historyRes, benchmarksRes] = await Promise.all([
       supabase.from('routines').select('file_name, days, updated_at').eq('user_id', userId).maybeSingle(),
       supabase.from('progress').select('date, checked').eq('user_id', userId).maybeSingle(),
       supabase.from('history').select('date, day_id, day_name').eq('user_id', userId),
+      supabase.from('exercise_benchmarks').select('exercise_name, weight_kg').eq('user_id', userId),
     ])
-    if (routineRes.error || progressRes.error || historyRes.error) return null
+    if (routineRes.error || progressRes.error || historyRes.error || benchmarksRes.error) return null
 
     return {
       routine: routineRes.data ? fromRoutineRow(routineRes.data) : null,
@@ -25,6 +26,9 @@ export async function pullCloudState(userId) {
         dayId: h.day_id,
         dayName: h.day_name,
       })),
+      benchmarks: Object.fromEntries(
+        (benchmarksRes.data || []).map((b) => [b.exercise_name, Number(b.weight_kg)])
+      ),
     }
   } catch {
     return null
@@ -64,6 +68,19 @@ export async function pushHistory(userId, history) {
       })),
       { onConflict: 'user_id,date,day_id', ignoreDuplicates: true }
     )
+  } catch {
+    // sin conexión u otro error transitorio: se reintenta en el próximo cambio
+  }
+}
+
+export async function pushBenchmark(userId, exerciseName, weightKg) {
+  try {
+    await supabase.from('exercise_benchmarks').upsert({
+      user_id: userId,
+      exercise_name: exerciseName,
+      weight_kg: weightKg,
+      updated_at: new Date().toISOString(),
+    })
   } catch {
     // sin conexión u otro error transitorio: se reintenta en el próximo cambio
   }

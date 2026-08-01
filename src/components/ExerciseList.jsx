@@ -15,7 +15,7 @@ function groupByBlock(exercises) {
   return groups
 }
 
-export function ExerciseList({ day, checkedSet, onToggle }) {
+export function ExerciseList({ day, checkedSet, onToggle, getBenchmark, showWeight }) {
   const groups = groupByBlock(day.exercises)
 
   return (
@@ -30,7 +30,9 @@ export function ExerciseList({ day, checkedSet, onToggle }) {
               key={exercise.id}
               exercise={exercise}
               checked={checkedSet.has(exercise.id)}
-              onToggle={() => onToggle(exercise.id)}
+              onToggle={(weightKg) => onToggle(exercise.id, exercise.name, weightKg)}
+              weightKg={showWeight ? getBenchmark?.(exercise.name) : null}
+              showWeight={showWeight}
             />
           ))}
         </section>

@@ -40,6 +40,16 @@ export const RoutineInputSchema = z.object({
   days: z.array(DaySchema).min(1),
 })
 
+/**
+ * Normaliza un nombre de ejercicio para usarlo como clave de matching (ej.
+ * benchmarks de peso) entre subidas de Excel distintas, donde el `id` del
+ * ejercicio puede cambiar pero el nombre visible es el mismo.
+ * @param {string} name
+ */
+export function normalizeExerciseName(name) {
+  return String(name ?? '').trim().toLowerCase()
+}
+
 export class RoutineValidationError extends Error {
   constructor(issues) {
     super(`Rutina inválida: ${issues.join('; ')}`)
