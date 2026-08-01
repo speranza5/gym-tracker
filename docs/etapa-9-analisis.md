@@ -24,7 +24,8 @@ detalle de qué se hizo).
 | Contenido del registro | Fecha, día, ejercicios hechos + peso por ejercicio + nota de texto libre opcional |
 | Estado del botón tras registrar | Se mantiene disponible — volver a tocarlo agrega otra fila, sin deshabilitar ni ocultar |
 | Notas al registrar | Modal con textarea opcional, se abre en cada tap de "Registrar sesión" |
-| Cerrar el modal sin escribir nada | La sesión se registra igual, sin nota — cerrar/cancelar no aborta el registro |
+| Cerrar el modal por la X o por afuera | **Cancela de verdad** — no registra nada (cambiado tras probar la primera versión: ver nota abajo) |
+| Cerrar el modal con "Guardar" | Único camino que registra la sesión, con la nota tipeada (o sin ella si quedó vacía) |
 | Feedback de confirmación | Toast custom (sin librería nueva), se muestra después de cerrar el modal |
 | Editar una nota ya guardada | Fuera de alcance — Etapa 9 sigue siendo de solo-escritura |
 
@@ -93,12 +94,19 @@ puntos de entrada:
 1. El usuario toca "Registrar sesión" → se abre el modal con un
    `<textarea>` opcional ("¿Cómo te sentiste? (opcional)") y un botón
    "Guardar".
-2. **Cerrar sin escribir** (X, click afuera, o "Guardar" con el textarea
-   vacío): la sesión se registra de todas formas, con `notes: null`. El
-   modal nunca es lo que decide *si* se registra, solo *qué nota* lleva.
-3. Al confirmar (con o sin texto), se llama a `pushSession` (ver Sync) y
-   el modal se cierra.
-4. Inmediatamente después se dispara el toast de confirmación.
+2. **"Guardar"** (con o sin texto en el textarea) es el único camino que
+   registra: llama a `pushSession` (ver Sync) con `notes: null` si quedó
+   vacío, cierra el modal, y dispara el toast de confirmación.
+3. **X o click afuera del modal** cancelan de verdad — no llaman a
+   `pushSession`, solo cierran el modal y descartan lo tipeado.
+
+> **Nota (post-implementación):** la primera versión de esta etapa hacía
+> que cualquier cierre registrara la sesión (X y click afuera incluidos),
+> con el razonamiento de que "cerrar el modal" no debería poder perder el
+> registro de una sesión ya completada. En el uso real esto resultó
+> confuso — la X se lee como "cancelar", no como "guardar sin nota" — así
+> que se cambió a que solo "Guardar" registre. Si se vuelve a tocar este
+> flujo, mantener esta versión: es la que el usuario probó y confirmó.
 
 No hay validación de longitud ni contenido — es texto libre, tal cual lo
 tipee el usuario.
