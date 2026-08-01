@@ -86,6 +86,40 @@ export async function pushBenchmark(userId, exerciseName, weightKg) {
   }
 }
 
+// Lecturas filtradas por rango de fechas, para la pantalla de
+// estadísticas (Etapa 10) — a diferencia de pullCloudState, que trae
+// `history` completo sin filtro. Fallan en silencio a un array vacío,
+// mismo criterio que el resto de este archivo (nunca propagan el error).
+export async function pullHistoryInRange(userId, startDate, endDate) {
+  try {
+    const { data, error } = await supabase
+      .from('history')
+      .select('date, day_id, day_name')
+      .eq('user_id', userId)
+      .gte('date', startDate)
+      .lte('date', endDate)
+    if (error) return []
+    return data || []
+  } catch {
+    return []
+  }
+}
+
+export async function pullSessionsInRange(userId, startDate, endDate) {
+  try {
+    const { data, error } = await supabase
+      .from('training_sessions')
+      .select('date, exercises')
+      .eq('user_id', userId)
+      .gte('date', startDate)
+      .lte('date', endDate)
+    if (error) return []
+    return data || []
+  } catch {
+    return []
+  }
+}
+
 // A diferencia del resto de este archivo (upsert de un estado único), acá
 // es insert puro: varias sesiones registradas el mismo día son filas
 // distintas, a propósito (ver docs/etapa-9-analisis.md).

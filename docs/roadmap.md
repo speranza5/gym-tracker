@@ -86,7 +86,7 @@ Herramientas:
 - `getRoutineSummary()` → `GET /api/v1/routine/summary` (pendiente de la Etapa 6)
 - `validateRoutine()` → `POST /api/v1/routine/validate` (pendiente de la Etapa 6)
 
-## Etapa 8 — Registro de peso por ejercicio (benchmark) 💭
+## Etapa 8 — Registro de peso por ejercicio (benchmark) ✅
 
 Agregar un campo de peso (y opcionalmente series/reps hechas) por
 ejercicio, capturable tanto en modo lista (`ExerciseCard.jsx`) como en modo
@@ -96,7 +96,7 @@ vez y tenga un benchmark. Requiere extender el modelo de dominio
 numérico, solo texto descriptivo (`series`, `repsTime` son strings libres
 del Excel, no datos capturados por el usuario).
 
-## Etapa 9 — Registro de sesión de entrenamiento 💭
+## Etapa 9 — Registro de sesión de entrenamiento ✅
 
 Al llegar al final de la rutina en modo foco (pantalla "¡Día completado!"
 en `FocusView.jsx`) — y considerar si también en modo lista al llegar al
@@ -106,7 +106,7 @@ fecha) en una tabla nueva (ej. `training_sessions`), distinta de `history`
 (que hoy es solo un marcador de racha vía `date/day_id/day_name`, sin
 detalle real de qué se entrenó).
 
-## Etapa 10 — Sección de estadísticas 💭
+## Etapa 10 — Sección de estadísticas ✅
 
 Pantalla nueva (un `screen` adicional en `App.jsx`, como ya existe
 `'open-tracker'`) para ver consistencia semanal/mensual/anual (días

@@ -8,6 +8,7 @@ import { ViewToggle } from './components/ViewToggle'
 import { FocusView } from './components/FocusView'
 import { SideMenu } from './components/SideMenu'
 import { OpenTracker } from './components/OpenTracker'
+import { StatsView } from './components/StatsView'
 import { RecordSessionModal } from './components/RecordSessionModal'
 import { Toast } from './components/Toast'
 import { useWorkoutData } from './hooks/useWorkoutData'
@@ -60,6 +61,10 @@ function App() {
 
   if (screen === 'open-tracker') {
     return <OpenTracker user={user} onBack={() => setScreen('routine')} />
+  }
+
+  if (screen === 'stats') {
+    return <StatsView user={user} onBack={() => setScreen('routine')} />
   }
 
   const activeDay = workoutData.days.find((d) => d.id === activeDayId) || workoutData.days[0]
@@ -148,6 +153,7 @@ function App() {
         onSignOut={signOut}
         onChangeFile={handleChangeFile}
         onOpenTracker={() => setScreen('open-tracker')}
+        onStats={() => setScreen('stats')}
       />
 
       <RecordSessionModal

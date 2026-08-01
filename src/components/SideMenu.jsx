@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { X, FileSpreadsheet, Plug } from 'lucide-react'
+import { X, FileSpreadsheet, Plug, BarChart3 } from 'lucide-react'
 import { AuthButton } from './AuthButton'
 
 /**
@@ -16,6 +16,7 @@ export function SideMenu({
   onSignOut,
   onChangeFile,
   onOpenTracker,
+  onStats,
 }) {
   useEffect(() => {
     if (!open) return
@@ -33,6 +34,11 @@ export function SideMenu({
 
   const handleOpenTracker = () => {
     onOpenTracker()
+    onClose()
+  }
+
+  const handleStats = () => {
+    onStats()
     onClose()
   }
 
@@ -66,6 +72,13 @@ export function SideMenu({
           <button type="button" className="side-menu__item" onClick={handleOpenTracker}>
             <Plug size={18} />
             <span>Open Tracker</span>
+          </button>
+        )}
+
+        {user && (
+          <button type="button" className="side-menu__item" onClick={handleStats}>
+            <BarChart3 size={18} />
+            <span>Estadísticas</span>
           </button>
         )}
       </aside>
