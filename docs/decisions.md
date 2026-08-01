@@ -437,3 +437,39 @@ un dispositivo/sesión de invitado.
 `exercise_benchmarks` o de `training_sessions` (Etapa 9, mismo criterio)
 hereda este mismo requisito de login — no hace falta repetir esta
 decisión, solo referenciarla.
+
+---
+
+## 15. `training_sessions` coexiste con `history`, superposición aceptada
+
+**Contexto:** la Etapa 9 (ver [`etapa-9-analisis.md`](./etapa-9-analisis.md))
+agrega un registro explícito de sesión de entrenamiento, elegido por el
+usuario ("Registrar sesión"), con foto de ejercicios + pesos + nota
+opcional. La tabla `history` ya existía para otro propósito: marcar
+automáticamente cuando un día llega al 100%, para calcular racha.
+
+**Decisión:** son dos tablas separadas, sin intentar unificarlas en esta
+etapa. `history` sigue siendo automática (se dispara sola al 100%,
+sin acción del usuario) y liviana (solo `date`/`day_id`/`day_name`).
+`training_sessions` es explícita (el usuario decide cuándo registrar,
+inclusive parcial o más de una vez por día) y con el detalle real de qué
+se entrenó.
+
+**Alternativas consideradas:**
+- Unificar todo en `training_sessions` y que el cálculo de racha (hoy en
+  `useProgress.js`, disparado por `history`) lea de ahí — descartada por
+  ahora: `training_sessions` permite múltiples filas por día sin
+  constraint de unicidad, y filas parciales (no al 100%); reusarla para
+  racha requeriría filtrar y deduplicar en cada cálculo, más complejidad
+  que separar las dos tablas por propósito.
+
+**Motivos:** mismo criterio que la ADR #9 (duplicación aceptada y
+documentada, no accidental) — cada tabla resuelve un problema distinto
+sin que una tenga que forzar su forma para servir al otro caso de uso.
+
+**Consecuencias:** un día puede aparecer en `history` sin ninguna fila en
+`training_sessions` (el usuario nunca tocó "Registrar sesión") y
+viceversa (sesión registrada al 60%, sin llegar nunca al 100% que
+dispara `history`). Si en algún momento se quiere una sola fuente de
+verdad para "qué días entrené", habría que decidir explícitamente cuál
+de las dos gana — no asumido acá.

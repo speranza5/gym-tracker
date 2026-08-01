@@ -8,6 +8,8 @@ import { ViewToggle } from './components/ViewToggle'
 import { FocusView } from './components/FocusView'
 import { SideMenu } from './components/SideMenu'
 import { OpenTracker } from './components/OpenTracker'
+import { RecordSessionModal } from './components/RecordSessionModal'
+import { Toast } from './components/Toast'
 import { useWorkoutData } from './hooks/useWorkoutData'
 import { useProgress } from './hooks/useProgress'
 import { useAuth } from './hooks/useAuth'
@@ -17,16 +19,16 @@ import './App.css'
 function App() {
   const { user, loading: authLoading, signInWithGoogle, signOut } = useAuth()
   const { workoutData, uploadFile, error, loading, resetWorkoutData } = useWorkoutData(user?.id)
-  const { toggleExercise, resetDay, getDayChecked, getDayPercent, getBenchmark } = useProgress(
-    workoutData,
-    user?.id
-  )
+  const { toggleExercise, resetDay, getDayChecked, getDayPercent, getBenchmark, recordSession } =
+    useProgress(workoutData, user?.id)
   const showWeight = Boolean(user)
 
   const [activeDayId, setActiveDayId] = useState(null)
   const [viewMode, setViewMode] = useState(() => loadViewMode())
   const [menuOpen, setMenuOpen] = useState(false)
   const [screen, setScreen] = useState('routine')
+  const [recordModalOpen, setRecordModalOpen] = useState(false)
+  const [toastMessage, setToastMessage] = useState(null)
 
   useEffect(() => {
     saveViewMode(viewMode)
@@ -70,6 +72,11 @@ function App() {
     }
   }
 
+  const handleRecordSession = (notes) => {
+    recordSession(activeDay, notes)
+    setToastMessage('Sesión registrada')
+  }
+
   return (
     <>
       <div className="app">
@@ -94,7 +101,12 @@ function App() {
           <>
             <DayTabs days={workoutData.days} activeDayId={activeDay.id} onSelect={setActiveDayId} />
 
-            <ProgressBar percent={percent} onReset={() => resetDay(activeDay.id)} />
+            <ProgressBar
+              percent={percent}
+              onReset={() => resetDay(activeDay.id)}
+              onRecordSession={() => setRecordModalOpen(true)}
+              canRecord={showWeight}
+            />
 
             <main className="app__content">
               <ExerciseList
@@ -120,6 +132,8 @@ function App() {
               onExitToList={() => setViewMode('list')}
               getBenchmark={getBenchmark}
               showWeight={showWeight}
+              onRecordSession={() => setRecordModalOpen(true)}
+              canRecord={showWeight}
             />
           </main>
         )}
@@ -135,6 +149,14 @@ function App() {
         onChangeFile={handleChangeFile}
         onOpenTracker={() => setScreen('open-tracker')}
       />
+
+      <RecordSessionModal
+        open={recordModalOpen}
+        onClose={() => setRecordModalOpen(false)}
+        onSubmit={handleRecordSession}
+      />
+
+      <Toast message={toastMessage} onDismiss={() => setToastMessage(null)} />
     </>
   )
 }

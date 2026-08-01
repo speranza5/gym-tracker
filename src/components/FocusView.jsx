@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { ChevronLeft, Check, PartyPopper } from 'lucide-react'
+import { ChevronLeft, Check, NotebookPen, PartyPopper } from 'lucide-react'
 import { FocusCard } from './FocusCard'
 
 function firstPendingIndex(day, checkedSet) {
@@ -7,7 +7,16 @@ function firstPendingIndex(day, checkedSet) {
   return index === -1 ? day.exercises.length : index
 }
 
-export function FocusView({ day, checkedSet, onToggle, onExitToList, getBenchmark, showWeight }) {
+export function FocusView({
+  day,
+  checkedSet,
+  onToggle,
+  onExitToList,
+  getBenchmark,
+  showWeight,
+  onRecordSession,
+  canRecord,
+}) {
   const [index, setIndex] = useState(() => firstPendingIndex(day, checkedSet))
   const [weightInput, setWeightInput] = useState('')
 
@@ -40,9 +49,17 @@ export function FocusView({ day, checkedSet, onToggle, onExitToList, getBenchmar
         <p className="focus-view__complete-subtitle">
           Terminaste los {day.exercises.length} ejercicios de {day.name}.
         </p>
-        <button type="button" className="focus-view__complete-btn" onClick={onExitToList}>
-          Volver a la lista
-        </button>
+        <div className="focus-view__complete-actions">
+          {canRecord && (
+            <button type="button" className="focus-view__record" onClick={onRecordSession}>
+              <NotebookPen size={18} />
+              Registrar sesión
+            </button>
+          )}
+          <button type="button" className="focus-view__complete-btn" onClick={onExitToList}>
+            Volver a la lista
+          </button>
+        </div>
       </div>
     )
   }

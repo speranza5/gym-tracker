@@ -85,3 +85,23 @@ export async function pushBenchmark(userId, exerciseName, weightKg) {
     // sin conexión u otro error transitorio: se reintenta en el próximo cambio
   }
 }
+
+// A diferencia del resto de este archivo (upsert de un estado único), acá
+// es insert puro: varias sesiones registradas el mismo día son filas
+// distintas, a propósito (ver docs/etapa-9-analisis.md).
+export async function pushSession(userId, session) {
+  try {
+    await supabase.from('training_sessions').insert({
+      user_id: userId,
+      date: session.date,
+      day_id: session.dayId,
+      day_name: session.dayName,
+      exercises: session.exercises,
+      notes: session.notes || null,
+    })
+  } catch {
+    // sin conexión u otro error transitorio: la sesión no queda registrada
+    // y no hay reintento automático (a diferencia de progress/history, acá
+    // no hay un estado local persistente del que reintentar)
+  }
+}

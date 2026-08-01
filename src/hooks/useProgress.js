@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { loadProgress, saveProgress, loadHistory, saveHistory, todayStr } from '../utils/storage'
-import { pullCloudState, pushProgress, pushHistory, pushBenchmark } from '../utils/cloudSync'
+import { pullCloudState, pushProgress, pushHistory, pushBenchmark, pushSession } from '../utils/cloudSync'
 import { normalizeExerciseName } from '../domain/routine'
 
 /**
@@ -112,6 +112,30 @@ export function useProgress(workoutData, userId) {
     [setBenchmark]
   )
 
+  // Registra una "foto" del día actual (qué ejercicios, hechos o no, con
+  // qué peso) en training_sessions. Requiere login, igual que los
+  // benchmarks — ver ADR sobre esto en decisions.md.
+  const recordSession = useCallback(
+    (day, notes) => {
+      if (!userId) return
+      const checked = new Set(progressRef.current.checked[day.id] || [])
+      const exercises = day.exercises.map((exercise) => ({
+        exerciseId: exercise.id,
+        exerciseName: exercise.name,
+        checked: checked.has(exercise.id),
+        weightKg: getBenchmark(exercise.name),
+      }))
+      pushSession(userId, {
+        date: progressRef.current.date,
+        dayId: day.id,
+        dayName: day.name,
+        exercises,
+        notes: notes || null,
+      })
+    },
+    [userId, getBenchmark]
+  )
+
   const resetDay = useCallback((dayId) => {
     setProgress((prev) => ({ ...prev, checked: { ...prev.checked, [dayId]: [] } }))
   }, [])
@@ -156,5 +180,6 @@ export function useProgress(workoutData, userId) {
     getDayChecked,
     getDayPercent,
     getBenchmark,
+    recordSession,
   }
 }
