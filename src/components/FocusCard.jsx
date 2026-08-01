@@ -1,3 +1,4 @@
+import { Dumbbell } from 'lucide-react'
 import { getBlockColor } from '../utils/blockColors'
 
 export function FocusCard({ exercise, weightKg, onWeightChange, showWeight }) {
@@ -13,7 +14,10 @@ export function FocusCard({ exercise, weightKg, onWeightChange, showWeight }) {
 
       {showWeight && (
         <label className="focus-card__weight">
-          <span className="focus-card__weight-label">Peso (kg)</span>
+          <span className="focus-card__weight-label">
+            <Dumbbell size={14} />
+            Peso (kg)
+          </span>
           <input
             type="number"
             inputMode="decimal"

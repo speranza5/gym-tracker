@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Check, ChevronDown } from 'lucide-react'
+import { Check, ChevronDown, Dumbbell } from 'lucide-react'
 import { getBlockColor } from '../utils/blockColors'
 
 export function ExerciseCard({ exercise, checked, onToggle, weightKg, showWeight }) {
@@ -40,15 +40,17 @@ export function ExerciseCard({ exercise, checked, onToggle, weightKg, showWeight
         </div>
 
         {showWeight && (
-          <input
-            type="number"
-            inputMode="decimal"
-            className="exercise-card__weight"
-            placeholder="kg"
-            value={weightInput}
-            onClick={(e) => e.stopPropagation()}
-            onChange={(e) => setWeightInput(e.target.value)}
-          />
+          <label className="exercise-card__weight" onClick={(e) => e.stopPropagation()}>
+            <Dumbbell size={14} className="exercise-card__weight-icon" />
+            <input
+              type="number"
+              inputMode="decimal"
+              aria-label="Peso en kilogramos"
+              placeholder="kg"
+              value={weightInput}
+              onChange={(e) => setWeightInput(e.target.value)}
+            />
+          </label>
         )}
 
         {hasDescription && (
