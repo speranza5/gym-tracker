@@ -11,8 +11,6 @@ export function SideMenu({
   open,
   onClose,
   user,
-  authLoading,
-  onSignIn,
   onSignOut,
   onChangeFile,
   onOpenTracker,
@@ -58,7 +56,7 @@ export function SideMenu({
         </div>
 
         <div className="side-menu__section">
-          <AuthButton user={user} loading={authLoading} onSignIn={onSignIn} onSignOut={onSignOut} />
+          <AuthButton user={user} onSignOut={onSignOut} />
         </div>
 
         <div className="side-menu__divider" />

@@ -24,8 +24,8 @@ escribir la rutina de un usuario.
 
 ## Objetivo
 
-1. **Corto plazo:** que el frontend siga siendo simple, rápido y usable sin
-   login (modo invitado, todo en `localStorage`).
+1. **Corto plazo:** que loguearse sea el único paso de fricción antes de usar
+   la app, y de ahí en adelante sea simple y rápida.
 2. **Mediano plazo:** que quien quiera sincronizar entre dispositivos pueda
    loguearse con Google y tener su rutina/progreso/historial en la nube.
 3. **Largo plazo (Open Tracker):** que la rutina de un usuario sea accesible
@@ -42,9 +42,9 @@ escribir la rutina de un usuario.
 - **Historial de racha:** cada día completado al 100% queda registrado.
 - **Dos vistas:** Lista (todos los ejercicios del día) y Foco (un ejercicio
   a la vez, con navegación).
-- **Login opcional con Google** (Supabase Auth) para sincronizar rutina,
-  progreso e historial entre dispositivos — sin login, todo sigue
-  funcionando igual en modo invitado con `localStorage`.
+- **Login obligatorio con Google** (Supabase Auth) — sin sesión, se ve una
+  landing pública en vez de la app. Con sesión, rutina, progreso e historial
+  se sincronizan entre dispositivos.
 - **Menú lateral** (estilo drawer de Material) con la configuración de la
   rutina: cambiar de archivo, cuenta, y acceso a Open Tracker.
 - **Open Tracker:** API REST pública v1 (`GET`/`PUT /api/v1/routine`)

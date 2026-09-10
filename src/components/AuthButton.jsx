@@ -1,17 +1,10 @@
-import { LogIn, LogOut } from 'lucide-react'
+import { LogOut } from 'lucide-react'
 
-export function AuthButton({ user, loading, onSignIn, onSignOut }) {
-  if (loading) return null
-
-  if (!user) {
-    return (
-      <button type="button" className="auth-button auth-button--signin" onClick={onSignIn}>
-        <LogIn size={16} />
-        <span>Continuar con Google</span>
-      </button>
-    )
-  }
-
+/**
+ * Siempre renderiza la rama "con sesión" — desde la Etapa 12, login es
+ * obligatorio (gate en App.jsx), así que `user` nunca es null acá.
+ */
+export function AuthButton({ user, onSignOut }) {
   const name = user.user_metadata?.full_name || user.user_metadata?.name || user.email
   const avatarUrl = user.user_metadata?.avatar_url
 

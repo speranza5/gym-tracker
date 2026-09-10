@@ -55,7 +55,7 @@ sistema con un loop, no una lista de features sueltas.
 | Estilo del CTA | Botón grande, relleno con `--accent` (mismo peso visual que `.modal__save`), no el botón chico `.auth-button--signin` que hoy vive en una esquina |
 | ¿Es gratis y lo decimos? | Sí — no hay Stripe/billing/pricing en ningún lado del código (confirmado por búsqueda), y no hay planes pagos propios. Se dice explícito en la FAQ ("¿Es gratis?") |
 | Orden de los pilares | Trackeo primero, IA segundo — decisión de diseño (el usuario delegó el criterio): "Gym Tracker" genera la expectativa de trackeo, así que ese pilar orienta primero; la IA aparece después como el diferencial, no como lo primero que hay que entender para saber qué es la app |
-| ¿Prueba visual (capturas reales)? | Sí — capturas reales del producto, no ilustraciones. Ver "Capturas: qué se muestra y qué no" abajo para el límite de honestidad en el pilar de IA |
+| ¿Prueba visual (capturas reales)? | **Revertido tras implementar y ver en vivo:** se implementaron capturas reales del producto (ver "Capturas" abajo), pero el feedback visual una vez corrida la app localmente fue que se veían mal — se sacaron. La landing quedó sin capturas, solo íconos + copy. Si en algún momento se retoma la idea, el análisis de honestidad de "Capturas" abajo sigue siendo válido como guía |
 | ¿Sección de confianza/FAQ? | Sí, sección propia y corta, cerca del cierre — 3 preguntas (gratis, por qué Google, seguridad de conectar una IA). Se descarta a propósito la pregunta "¿qué pasa con mis datos?" porque no existe hoy un flujo de borrado de cuenta — prometerlo en la FAQ sería el mismo tipo de error que prometer insights de IA que no están construidos |
 | ¿Protagonismo de "Open Tracker" como marca? | Sí, propio — sección dedicada además de la mención dentro del pilar de IA, ver "4. Open Tracker" abajo |
 | Tono de la copy | Se mantiene el tono cercano/informal actual ("vos", frases cortas) — ya es consistente con el resto de la app (ej. "¿Cómo te sentiste?" en `RecordSessionModal.jsx`) |
@@ -138,9 +138,15 @@ venís") — no antes.
 
 ## Capturas: qué se muestra y qué no
 
-Se aprobó sumar capturas reales del producto a los pilares. El mismo
-criterio de precisión de la sección anterior aplica acá — con un matiz
-nuevo por pilar:
+**Revertido después de implementar (ver checklist).** Esta sección
+documenta el análisis original — se implementó, se corrió localmente, y
+el feedback fue que las capturas se veían mal. Se sacaron del componente
+y de `src/assets/landing/`. Queda acá como referencia si se retoma la
+idea más adelante, no como estado actual de la landing.
+
+Se había aprobado sumar capturas reales del producto a los pilares. El
+mismo criterio de precisión de la sección anterior aplica acá — con un
+matiz nuevo por pilar:
 
 - **Pilar de trackeo:** sin riesgo. Captura real de la UI existente (el
   gráfico de progresión de la Etapa 11, o la checklist diaria) — la app
@@ -460,27 +466,48 @@ en adelante sea simple y rápida."
 
 ## Checklist de implementación
 
-- [ ] Tomar las 3 capturas reales (gráfico de progresión o checklist;
-      `ConnectMcp.jsx`; Playground/Reference de Open Tracker) y
-      guardarlas en `src/assets/landing/` (carpeta nueva).
-- [ ] `Landing.jsx` — hero (con el loop de 5 pasos adentro), pilar de
+- [x] ~~Tomar las 3 capturas reales~~ — hecho, corrido localmente, y
+      **revertido**: no se veían bien. Se sacaron los `<img>` de
+      `Landing.jsx`, la regla `.landing__shot` de `App.css`, y
+      `src/assets/landing/` entero (carpeta borrada). La landing quedó
+      solo con íconos (`lucide-react`) + copy, sin imágenes.
+- [x] `Landing.jsx` — hero (con el loop de 5 pasos adentro), pilar de
       trackeo, pilar de IA, sección Open Tracker (con el diagrama de 3
       nodos adentro), FAQ, CTA de cierre — + CSS (`.landing`,
       `.landing__hero`, `.landing__loop`, `.landing__pillar`,
       `.landing__open-tracker`, `.landing__faq`, `.landing__closing-cta`,
       `.landing__cta`).
-- [ ] Gate nuevo en `App.jsx`: `authLoading` → loading mínimo; `!user` →
+- [x] Gate nuevo en `App.jsx`: `authLoading` → loading mínimo; `!user` →
       `Landing`; el resto sigue igual.
-- [ ] Sacar `authLoading`/`onSignIn` de las props de `FileUpload.jsx` y
+- [x] Sacar `authLoading`/`onSignIn` de las props de `FileUpload.jsx` y
       `SideMenu.jsx`.
-- [ ] Sacar la rama `!user` de `AuthButton.jsx` (queda sin caller tras el
-      punto anterior).
-- [ ] Actualizar `README.md` (`## Objetivo`, punto 1).
-- [ ] Confirmar visualmente en el browser: landing se ve bien en mobile
-      (~400px, incluido el scroll de las 6 secciones), el loop de 5
-      pasos y el diagrama de 3 nodos se leen bien apilados en mobile
-      (sin flechas cruzadas), los dos pilares (trackeo / IA) se leen con
-      el mismo peso visual, las capturas no recortan mal en mobile, el
-      FAQ se expande/colapsa correctamente, ambos CTA ("Empezar ahora")
-      redirigen a Google, y no hay parpadeo landing→app para una sesión
-      ya activa al recargar.
+- [x] Sacar la rama `!user` de `AuthButton.jsx` (queda sin caller tras el
+      punto anterior) — ahora siempre asume `user` presente.
+- [x] Actualizar `README.md` (`## Objetivo` punto 1, y de paso la línea de
+      "Características principales" que todavía describía login opcional
+      — quedó desactualizada por el mismo cambio y no estaba en el
+      checklist original).
+- [x] Confirmar visualmente en el browser: landing se ve bien en mobile y
+      desktop (Chrome headless, con un hallazgo de tooling documentado
+      abajo), el loop de 5 pasos y el diagrama de 3 nodos se leen bien
+      apilados sin flechas cruzadas, los dos pilares se leen con el mismo
+      peso visual, ambos CTA dicen "Empezar ahora", y `npm run
+      lint`/`npm run build` pasan limpios. **Repetido en local por el
+      usuario** (`npm run dev`) — feedback real: las capturas de pantalla
+      se veían mal, se sacaron (ver arriba).
+
+**Nota de la verificación visual — falso positivo de tooling:** la
+primera pasada de screenshots (vía `chrome --headless --screenshot
+--window-size=400,...`) mostraba texto cortado a mitad de palabra en
+todos los títulos. Se investigó a fondo (se sospechó primero un bug real
+de `min-width` en flex con las imágenes nuevas, y se agregó `min-width:
+0` a `.landing`/`.landing__pillar`/`.landing__shot` como hardening
+defensivo — queda en el código, es inofensivo y buena práctica, pero
+**no** era la causa) hasta confirmar, inyectando un `getBoundingClientRect()`
+temporal, que el modo headless clásico de Chrome fuerza un piso de
+~500px de ancho de layout aunque se pida `--window-size=400`, mientras la
+imagen de salida sí respeta el ancho pedido — o sea, la captura recortaba
+la mitad derecha de una página perfectamente bien maquetada. Con
+`--window-size` ≥500 la landing se ve correcta en mobile y desktop, sin
+overflow real. Vale la pena recordar esto si se vuelve a testear
+visualmente con este mismo método.

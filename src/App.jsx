@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Dumbbell, Menu } from 'lucide-react'
+import { Landing } from './components/Landing'
 import { FileUpload } from './components/FileUpload'
 import { DayTabs } from './components/DayTabs'
 import { ProgressBar } from './components/ProgressBar'
@@ -45,18 +46,18 @@ function App() {
     }
   }, [workoutData, activeDayId])
 
+  if (authLoading) {
+    return <div className="app-loading">Cargando…</div>
+  }
+
+  if (!user) {
+    return <Landing onSignIn={signInWithGoogle} />
+  }
+
+  // a partir de acá, `user` siempre existe — FileUpload y el resto del
+  // árbol ya no necesitan authLoading/onSignIn
   if (!workoutData) {
-    return (
-      <FileUpload
-        onFile={uploadFile}
-        loading={loading}
-        error={error}
-        user={user}
-        authLoading={authLoading}
-        onSignIn={signInWithGoogle}
-        onSignOut={signOut}
-      />
-    )
+    return <FileUpload onFile={uploadFile} loading={loading} error={error} user={user} onSignOut={signOut} />
   }
 
   if (screen === 'open-tracker') {
@@ -148,8 +149,6 @@ function App() {
         open={menuOpen}
         onClose={() => setMenuOpen(false)}
         user={user}
-        authLoading={authLoading}
-        onSignIn={signInWithGoogle}
         onSignOut={signOut}
         onChangeFile={handleChangeFile}
         onOpenTracker={() => setScreen('open-tracker')}

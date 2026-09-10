@@ -2,7 +2,7 @@ import { useCallback, useRef, useState } from 'react'
 import { UploadCloud, FileSpreadsheet } from 'lucide-react'
 import { AuthButton } from './AuthButton'
 
-export function FileUpload({ onFile, loading, error, user, authLoading, onSignIn, onSignOut }) {
+export function FileUpload({ onFile, loading, error, user, onSignOut }) {
   const inputRef = useRef(null)
   const [dragOver, setDragOver] = useState(false)
 
@@ -17,7 +17,7 @@ export function FileUpload({ onFile, loading, error, user, authLoading, onSignIn
   return (
     <div className="upload-screen">
       <div className="upload-screen__auth">
-        <AuthButton user={user} loading={authLoading} onSignIn={onSignIn} onSignOut={onSignOut} />
+        <AuthButton user={user} onSignOut={onSignOut} />
       </div>
 
       <div className="upload-screen__icon">

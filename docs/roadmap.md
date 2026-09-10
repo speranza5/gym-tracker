@@ -123,7 +123,7 @@ gráficos en el proyecto todavía) y es más esfuerzo que un resumen numérico.
 Ver [`etapa-11-analisis.md`](./etapa-11-analisis.md) para el spec visual
 completo (Recharts, línea única con `--accent`, tabla alternativa).
 
-## Etapa 12 — Landing pública + login obligatorio 🔜
+## Etapa 12 — Landing pública + login obligatorio ✅
 
 Cambio de comportamiento importante: hoy la app funciona completa en modo
 invitado (ver Etapa 2 — "sin romper el modo invitado"), todo en
