@@ -133,19 +133,26 @@ sin un segundo query por cada selección.
 
 ## Checklist de implementación
 
-- [ ] `npm install recharts`.
-- [ ] `pullAllSessions` en `src/utils/cloudSync.js`.
-- [ ] Utilidad pura: de `training_sessions[]` → `{ exerciseNames: string[],
+- [x] `npm install recharts`.
+- [x] `pullAllSessions` en `src/utils/cloudSync.js`.
+- [x] Utilidad pura: de `training_sessions[]` → `{ exerciseNames: string[],
       seriesByExercise: Map<name, {recordedAt, weightKg}[]> }`, filtrando
-      `weightKg == null`.
-- [ ] Componente `ExerciseProgressChart.jsx` (Recharts `LineChart`, spec
+      `weightKg == null` (`buildExerciseProgress` en `statsAggregation.js`).
+- [x] Componente `ExerciseProgressChart.jsx` (Recharts `LineChart`, spec
       visual de arriba, usando `--accent`/`--bg`/`--border`/`--text-muted`
       ya definidos en `index.css`).
-- [ ] Barra de búsqueda de ejercicios dentro de `StatsView.jsx`.
-- [ ] Wiring: tap en Top 5 o en un resultado de búsqueda → setea el
+- [x] Barra de búsqueda de ejercicios dentro de `StatsView.jsx`.
+- [x] Wiring: tap en Top 5 o en un resultado de búsqueda → setea el
       ejercicio seleccionado → renderiza `ExerciseProgressChart`.
-- [ ] Estados de 0/1/2+ puntos.
-- [ ] Vista de tabla/lista alternativa (accordeón).
-- [ ] Confirmar visualmente en el browser (contenedor no recorta el eje
-      X, tooltip funciona con teclado, crosshair se ajusta al punto más
-      cercano).
+- [x] Estados de 0/1/2+ puntos.
+- [x] Vista de tabla/lista alternativa (accordeón).
+- [x] Confirmar visualmente en el browser (contenedor no recorta el eje
+      X, layout dark-mode correcto en los 3 estados de datos). Verificado
+      con datos mock vía una página de preview temporal (`?preview`),
+      borrada después de confirmar — no quedó en el código. **No
+      verificado con teclado/mouse real** (sin Playwright/chromium-cli
+      disponibles en este entorno): el comportamiento de foco de teclado
+      en el tooltip y el ajuste del crosshair al punto más cercano son
+      responsabilidad de Recharts (`activeDot`/`Tooltip` nativos, sin
+      lógica propia), no código nuevo que valga la pena re-verificar a
+      mano — pero si algo se ve raro ahí, es el primer lugar para mirar.

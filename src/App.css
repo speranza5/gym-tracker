@@ -1357,10 +1357,17 @@
   display: flex;
   align-items: center;
   gap: 12px;
+  width: 100%;
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   padding: 12px 14px;
+  color: inherit;
+  text-align: left;
+}
+
+.stats-view__top-item:active {
+  background: var(--bg-elevated);
 }
 
 .stats-view__top-rank {
@@ -1387,5 +1394,134 @@
   flex: 0 0 auto;
   color: var(--text-muted);
   font-size: 13px;
+  font-weight: 700;
+}
+
+/* Etapa 11 — progresión de cargas por ejercicio */
+
+.exercise-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+}
+
+.exercise-search__icon {
+  flex: 0 0 auto;
+  color: var(--text-muted);
+}
+
+.exercise-search__input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--text);
+  padding: 0;
+  min-width: 0;
+}
+
+.exercise-search__input:focus {
+  outline: none;
+}
+
+.exercise-search__results {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.exercise-search__result {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: inherit;
+  padding: 10px 12px;
+  font-size: 14px;
+}
+
+.exercise-search__result:active {
+  background: var(--bg-elevated);
+}
+
+.exercise-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+}
+
+.exercise-progress__title {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.exercise-progress__single {
+  font-size: 15px;
+}
+
+.exercise-progress__chart {
+  margin: 0 -8px;
+}
+
+.exercise-progress__tooltip {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.exercise-progress__tooltip strong {
+  font-size: 14px;
+  color: var(--text);
+}
+
+.exercise-progress__toggle {
+  align-self: flex-start;
+  background: transparent;
+  border: none;
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 0;
+}
+
+.exercise-progress__list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--border);
+  padding-top: 10px;
+}
+
+.exercise-progress__list-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.exercise-progress__list-item strong {
+  color: var(--text);
   font-weight: 700;
 }

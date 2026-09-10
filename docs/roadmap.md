@@ -114,12 +114,14 @@ completados vs. planificados) y qué ejercicios se entrenan con más
 frecuencia. Depende por completo de la Etapa 9: sin sesiones registradas
 no hay de dónde sacar estos números.
 
-## Etapa 11 — Progresión de cargas por ejercicio 💭
+## Etapa 11 — Progresión de cargas por ejercicio ✅
 
 Dentro de la sección de estadísticas (Etapa 10), gráfico de evolución del
 peso usado en un ejercicio a lo largo del tiempo. Se separa de la Etapa 10
 porque suma una dependencia nueva al frontend (no hay ninguna librería de
 gráficos en el proyecto todavía) y es más esfuerzo que un resumen numérico.
+Ver [`etapa-11-analisis.md`](./etapa-11-analisis.md) para el spec visual
+completo (Recharts, línea única con `--accent`, tabla alternativa).
 
 ## Etapa 12 — Landing pública + login obligatorio 💭
 

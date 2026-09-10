@@ -37,3 +37,32 @@ export function topExercises(sessionRows, limit = 5) {
     .sort((a, b) => b.count - a.count)
     .slice(0, limit)
 }
+
+/**
+ * Deriva, de todas las `training_sessions` de un usuario (Etapa 11), la
+ * lista de nombres de ejercicio distintos y la serie temporal de peso por
+ * ejercicio. Pesos nulos (ejercicio marcado sin peso) se excluyen — no se
+ * grafican como 0. Cada sesión es su propio punto, aunque haya varias el
+ * mismo día (ver docs/etapa-11-analisis.md).
+ * @param {{recorded_at: string, exercises: {exerciseName: string, weightKg: number|null}[]}[]} sessionRows
+ * @returns {{ exerciseNames: string[], seriesByExercise: Map<string, {recordedAt: string, weightKg: number}[]> }}
+ */
+export function buildExerciseProgress(sessionRows) {
+  const seriesByExercise = new Map()
+
+  sessionRows.forEach((session) => {
+    ;(session.exercises || []).forEach((exercise) => {
+      if (exercise.weightKg == null) return
+      const name = exercise.exerciseName
+      if (!seriesByExercise.has(name)) seriesByExercise.set(name, [])
+      seriesByExercise.get(name).push({
+        recordedAt: session.recorded_at,
+        weightKg: Number(exercise.weightKg),
+      })
+    })
+  })
+
+  const exerciseNames = Array.from(seriesByExercise.keys()).sort((a, b) => a.localeCompare(b))
+
+  return { exerciseNames, seriesByExercise }
+}

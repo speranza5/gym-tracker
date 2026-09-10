@@ -120,6 +120,24 @@ export async function pullSessionsInRange(userId, startDate, endDate) {
   }
 }
 
+// Historial completo (sin filtro de rango) de un usuario, para la
+// progresión de cargas por ejercicio (Etapa 11) — a diferencia de
+// pullSessionsInRange, acá se necesita toda la serie temporal, no un
+// período. Se llama una sola vez al abrir la pantalla de estadísticas.
+export async function pullAllSessions(userId) {
+  try {
+    const { data, error } = await supabase
+      .from('training_sessions')
+      .select('date, recorded_at, exercises')
+      .eq('user_id', userId)
+      .order('recorded_at', { ascending: true })
+    if (error) return []
+    return data || []
+  } catch {
+    return []
+  }
+}
+
 // A diferencia del resto de este archivo (upsert de un estado único), acá
 // es insert puro: varias sesiones registradas el mismo día son filas
 // distintas, a propósito (ver docs/etapa-9-analisis.md).

@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
+import { ChevronLeft, ChevronRight, Search } from 'lucide-react'
 import { getPeriodRange } from '../utils/dateRange'
-import { countDistinctDays, topExercises } from '../utils/statsAggregation'
-import { pullHistoryInRange, pullSessionsInRange } from '../utils/cloudSync'
+import { buildExerciseProgress, countDistinctDays, topExercises } from '../utils/statsAggregation'
+import { pullAllSessions, pullHistoryInRange, pullSessionsInRange } from '../utils/cloudSync'
+import { ExerciseProgressChart } from './ExerciseProgressChart'
 
 const GRANULARITIES = [
   { key: 'week', label: 'Semana' },
@@ -17,7 +18,28 @@ export function StatsView({ user, onBack }) {
   const [daysCompleted, setDaysCompleted] = useState(0)
   const [topList, setTopList] = useState([])
 
+  // Etapa 11: progresión de cargas — historial completo, independiente
+  // del selector de período de arriba.
+  const [allSessions, setAllSessions] = useState([])
+  const [selectedExercise, setSelectedExercise] = useState(null)
+  const [exerciseQuery, setExerciseQuery] = useState('')
+
   const { start, end, label } = getPeriodRange(granularity, offset)
+
+  useEffect(() => {
+    pullAllSessions(user.id).then(setAllSessions)
+  }, [user.id])
+
+  const { exerciseNames, seriesByExercise } = useMemo(
+    () => buildExerciseProgress(allSessions),
+    [allSessions]
+  )
+
+  const searchResults = useMemo(() => {
+    const q = exerciseQuery.trim().toLowerCase()
+    if (!q) return []
+    return exerciseNames.filter((name) => name.toLowerCase().includes(q))
+  }, [exerciseQuery, exerciseNames])
 
   useEffect(() => {
     let cancelled = false
@@ -88,33 +110,94 @@ export function StatsView({ user, onBack }) {
       <main className="stats-view__content">
         {loading ? (
           <p className="stats-view__loading">Cargando…</p>
-        ) : isEmpty ? (
-          <p className="stats-view__empty">Todavía no registraste sesiones este período.</p>
         ) : (
           <>
-            <section className="stats-view__section">
-              <h3 className="stats-view__section-title">Consistencia</h3>
-              <p className="stats-view__days-count">
-                <strong>{daysCompleted}</strong> {daysCompleted === 1 ? 'día entrenado' : 'días entrenados'}
-              </p>
-            </section>
+            {isEmpty ? (
+              <p className="stats-view__empty">Todavía no registraste sesiones este período.</p>
+            ) : (
+              <>
+                <section className="stats-view__section">
+                  <h3 className="stats-view__section-title">Consistencia</h3>
+                  <p className="stats-view__days-count">
+                    <strong>{daysCompleted}</strong>{' '}
+                    {daysCompleted === 1 ? 'día entrenado' : 'días entrenados'}
+                  </p>
+                </section>
 
-            <section className="stats-view__section">
-              <h3 className="stats-view__section-title">Ejercicios más frecuentes</h3>
-              {topList.length === 0 ? (
-                <p className="stats-view__empty-inline">Sin sesiones registradas con ejercicios marcados.</p>
-              ) : (
-                <ol className="stats-view__top-list">
-                  {topList.map((item, i) => (
-                    <li key={item.name} className="stats-view__top-item">
-                      <span className="stats-view__top-rank">{i + 1}</span>
-                      <span className="stats-view__top-name">{item.name}</span>
-                      <span className="stats-view__top-count">{item.count}</span>
-                    </li>
-                  ))}
-                </ol>
-              )}
-            </section>
+                <section className="stats-view__section">
+                  <h3 className="stats-view__section-title">Ejercicios más frecuentes</h3>
+                  {topList.length === 0 ? (
+                    <p className="stats-view__empty-inline">Sin sesiones registradas con ejercicios marcados.</p>
+                  ) : (
+                    <ol className="stats-view__top-list">
+                      {topList.map((item, i) => (
+                        <li key={item.name}>
+                          <button
+                            type="button"
+                            className="stats-view__top-item"
+                            onClick={() => {
+                              setSelectedExercise(item.name)
+                              setExerciseQuery('')
+                            }}
+                          >
+                            <span className="stats-view__top-rank">{i + 1}</span>
+                            <span className="stats-view__top-name">{item.name}</span>
+                            <span className="stats-view__top-count">{item.count}</span>
+                          </button>
+                        </li>
+                      ))}
+                    </ol>
+                  )}
+                </section>
+              </>
+            )}
+
+            {exerciseNames.length > 0 && (
+              <section className="stats-view__section">
+                <h3 className="stats-view__section-title">Progresión de cargas</h3>
+
+                <div className="exercise-search">
+                  <Search size={16} className="exercise-search__icon" />
+                  <input
+                    type="text"
+                    className="exercise-search__input"
+                    placeholder="Buscar ejercicio..."
+                    value={exerciseQuery}
+                    onChange={(e) => setExerciseQuery(e.target.value)}
+                  />
+                </div>
+
+                {exerciseQuery.trim() && (
+                  <ul className="exercise-search__results">
+                    {searchResults.length === 0 ? (
+                      <li className="stats-view__empty-inline">Sin ejercicios que coincidan.</li>
+                    ) : (
+                      searchResults.map((name) => (
+                        <li key={name}>
+                          <button
+                            type="button"
+                            className="exercise-search__result"
+                            onClick={() => {
+                              setSelectedExercise(name)
+                              setExerciseQuery('')
+                            }}
+                          >
+                            {name}
+                          </button>
+                        </li>
+                      ))
+                    )}
+                  </ul>
+                )}
+
+                {selectedExercise && (
+                  <ExerciseProgressChart
+                    exerciseName={selectedExercise}
+                    series={seriesByExercise.get(selectedExercise) || []}
+                  />
+                )}
+              </section>
+            )}
           </>
         )}
       </main>
