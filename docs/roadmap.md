@@ -135,14 +135,17 @@ tocar código, porque contradice una decisión ya tomada y documentada en
 la Etapa 2 (ADR #1). Ver [`etapa-12-analisis.md`](./etapa-12-analisis.md)
 para el spec funcional completo.
 
-## Etapa 13 — Empty state para usuario logueado sin rutina 💭
+## Etapa 13 — Empty state para usuario logueado sin rutina ✅
 
-Hoy, sin `workoutData`, cualquier usuario (invitado o logueado) ve la
-misma pantalla (`FileUpload.jsx`) con un dropzone de Excel. Con el login
-ya obligatorio (Etapa 12), sumar dos caminos más al dropzone: descargar
-una plantilla `.xlsx` lista para llenar, o ir directo a la guía "Conectar
-MCP" (ya existe en `ConnectMcp.jsx`) para completarla por chat con un
-asistente de IA en vez de a mano.
+Hoy, sin `workoutData`, cualquier usuario logueado ve la misma pantalla
+(`FileUpload.jsx`) con un dropzone de Excel. Con el login ya obligatorio
+(Etapa 12), suma dos caminos más al dropzone, los tres con el mismo
+peso visual: descargar una plantilla `.xlsx` lista para llenar, o ir
+directo a la guía "Conectar MCP" (ya existe en `ConnectMcp.jsx`) para
+completarla por chat con un asistente de IA en vez de a mano. Incluye
+destrabar un bug de alcance real: hoy `ConnectMcp` es inalcanzable sin
+tener ya una rutina cargada. Ver
+[`etapa-13-analisis.md`](./etapa-13-analisis.md) para el spec completo.
 
 ## Etapa 14 — Welcome tour de primer login 💭
 

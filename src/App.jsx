@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Dumbbell, Menu } from 'lucide-react'
 import { Landing } from './components/Landing'
 import { FileUpload } from './components/FileUpload'
+import { ConnectMcp } from './components/openTracker/ConnectMcp'
 import { DayTabs } from './components/DayTabs'
 import { ProgressBar } from './components/ProgressBar'
 import { ExerciseList } from './components/ExerciseList'
@@ -20,7 +21,7 @@ import './App.css'
 
 function App() {
   const { user, loading: authLoading, signInWithGoogle, signOut } = useAuth()
-  const { workoutData, uploadFile, error, loading, resetWorkoutData } = useWorkoutData(user?.id)
+  const { workoutData, uploadFile, error, loading, resetWorkoutData, refreshFromCloud } = useWorkoutData(user?.id)
   const { toggleExercise, resetDay, getDayChecked, getDayPercent, getBenchmark, recordSession } =
     useProgress(workoutData, user?.id)
   const showWeight = Boolean(user)
@@ -54,10 +55,27 @@ function App() {
     return <Landing onSignIn={signInWithGoogle} />
   }
 
+  // Chequeo antes del `!workoutData` a propósito (Etapa 13): ConnectMcp
+  // no depende de tener una rutina — es el camino para pedirle a una IA
+  // que arme la primera, así que tiene que ser alcanzable sin una.
+  if (screen === 'connect-mcp') {
+    return <ConnectMcp onBack={() => setScreen('routine')} />
+  }
+
   // a partir de acá, `user` siempre existe — FileUpload y el resto del
   // árbol ya no necesitan authLoading/onSignIn
   if (!workoutData) {
-    return <FileUpload onFile={uploadFile} loading={loading} error={error} user={user} onSignOut={signOut} />
+    return (
+      <FileUpload
+        onFile={uploadFile}
+        loading={loading}
+        error={error}
+        user={user}
+        onSignOut={signOut}
+        onConnectAi={() => setScreen('connect-mcp')}
+        onRefresh={refreshFromCloud}
+      />
+    )
   }
 
   if (screen === 'open-tracker') {

@@ -63,5 +63,17 @@ export function useWorkoutData(userId) {
     setWorkoutData(null)
   }, [])
 
-  return { workoutData, uploadFile, error, loading, resetWorkoutData }
+  // Repite el mismo pull de pullCloudState bajo demanda (Etapa 13) — para
+  // cuando la rutina se armó por otro lado (ej. un asistente de IA vía
+  // Open Tracker/MCP) mientras esta pantalla ya estaba abierta.
+  const refreshFromCloud = useCallback(async () => {
+    if (!userId) return
+    const cloud = await pullCloudState(userId)
+    if (cloud?.routine) {
+      saveWorkoutData(cloud.routine)
+      setWorkoutData(cloud.routine)
+    }
+  }, [userId])
+
+  return { workoutData, uploadFile, error, loading, resetWorkoutData, refreshFromCloud }
 }
