@@ -123,16 +123,17 @@ gráficos en el proyecto todavía) y es más esfuerzo que un resumen numérico.
 Ver [`etapa-11-analisis.md`](./etapa-11-analisis.md) para el spec visual
 completo (Recharts, línea única con `--accent`, tabla alternativa).
 
-## Etapa 12 — Landing pública + login obligatorio 💭
+## Etapa 12 — Landing pública + login obligatorio 🔜
 
 Cambio de comportamiento importante: hoy la app funciona completa en modo
 invitado (ver Etapa 2 — "sin romper el modo invitado"), todo en
 `localStorage`, sin cuenta. Esta etapa lo revierte: sin sesión, en vez de
 la app, se muestra una landing explicando qué es Gym Tracker (una app de
 bienestar "AI-friendly") y sus beneficios, con el login como único camino
-para entrar. Vale la pena registrar esto como una ADR nueva en
-`decisions.md` antes de tocar código, porque contradice una decisión ya
-tomada y documentada en la Etapa 2.
+para entrar. Registrado como ADR nueva en `decisions.md` (#16) antes de
+tocar código, porque contradice una decisión ya tomada y documentada en
+la Etapa 2 (ADR #1). Ver [`etapa-12-analisis.md`](./etapa-12-analisis.md)
+para el spec funcional completo.
 
 ## Etapa 13 — Empty state para usuario logueado sin rutina 💭
 

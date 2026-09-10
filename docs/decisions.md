@@ -473,3 +473,69 @@ viceversa (sesión registrada al 60%, sin llegar nunca al 100% que
 dispara `history`). Si en algún momento se quiere una sola fuente de
 verdad para "qué días entrené", habría que decidir explícitamente cuál
 de las dos gana — no asumido acá.
+
+---
+
+## 16. Login obligatorio: se revierte la ADR #1 (Etapa 12)
+
+**Contexto:** la ADR #1 decidió deliberadamente que el login fuera
+opcional, para no romper el caso de uso "abrir y usar sin fricción" con
+el que arrancó el proyecto (ver [`etapa-12-analisis.md`](./etapa-12-analisis.md)
+para el análisis funcional completo). Desde entonces, la app acumuló
+suficiente superficie que **ya** requiere sesión por excepción puntual
+(ADR #14: benchmark de peso, `training_sessions`) que el modo invitado
+pasó de ser "la experiencia completa" a "una versión degradada de la app
+real" — sin pesos, sin sesiones registradas, sin estadísticas (Etapa 10),
+sin progresión de cargas (Etapa 11), sin Open Tracker/MCP. Mantener el
+invitado ya no preserva friction-free access a *la app*, solo a una
+checklist básica.
+
+**Decisión:** se revierte la ADR #1. El login con Google pasa a ser
+**obligatorio**: sin sesión, en vez de la app (o del dropzone de Excel),
+se muestra una landing pública explicando qué es Gym Tracker, con el
+login como único camino para entrar. El modo invitado (`localStorage`
+sin cuenta) desaparece por completo, no queda como opción secundaria.
+Los datos que ya existían en `localStorage` de sesiones de invitado
+previas no se migran ni se leen — quedan huérfanos si esa persona no
+tiene (o no crea) una cuenta.
+
+**Alternativas consideradas:**
+- Mantener el invitado como opción secundaria explícita en la landing
+  ("Probar sin cuenta" además de "Iniciar sesión") — descartada: la app
+  ya tiene tantas features que requieren cuenta (Etapas 8–11) que un
+  invitado real terminaría chocando con paredes en casi cualquier
+  dirección que tome; mantener el camino solo agrega superficie a probar
+  y mantener por un caso de uso que ya no ofrece casi nada completo.
+- Migración automática de `localStorage` a Supabase en el primer login
+  forzado — descartada por ahora: es una app de uso personal, sin
+  usuarios de invitado reales conocidos hoy que dependan de datos viejos
+  sin loguearse; el esfuerzo de una migración con manejo de conflictos no
+  se justifica para ese caso.
+
+**Motivos:** la ADR #1 fue correcta cuando login opcional preservaba
+"la experiencia completa sin fricción". Ese supuesto dejó de ser cierto
+en la práctica bastante antes de esta ADR — cada etapa desde la #8 fue
+angostando el modo invitado a "solo la checklist", nunca revertido
+explícitamente. Etapa 12 solo pone en el código lo que ya era cierto
+funcionalmente: hoy el invitado no es una experiencia completa
+alternativa, es una versión incompleta.
+
+**Consecuencias:**
+- `App.jsx` gana un gate nuevo antes que el de `!workoutData`: sin
+  `user`, se renderiza la landing, ni `FileUpload` ni el resto de la app.
+- A partir de acá, **todo** el resto del código (`FileUpload.jsx`,
+  `SideMenu.jsx`, `useWorkoutData.js`, `useProgress.js`, `cloudSync.js`,
+  `showWeight`/`canRecord` en `App.jsx`) sigue recibiendo `user`/`userId`
+  como si pudiera ser `undefined`, pero en la práctica **ya nunca lo es**
+  una vez pasado el gate de la landing. Esa tolerancia a `userId`
+  ausente queda como código muerto-pero-inofensivo, no como un bug — se
+  documenta acá para que quede claro que es una decisión consciente
+  **no** limpiarlo en esta etapa (ver "Fuera de alcance" en
+  `etapa-12-analisis.md`), no un descuido. Un futuro refactor puede
+  simplificarlo con calma, sin apuro ni riesgo, cuando alguien toque esos
+  archivos por otra razón.
+- El README (`Objetivo` #1: "usable sin login, modo invitado") queda
+  desactualizado y se actualiza como parte de esta etapa.
+- Etapa 13 (empty state para usuario logueado sin rutina) y Etapa 14
+  (welcome tour) pasan a estar desbloqueadas — ambas asumían login
+  obligatorio ya vigente.
