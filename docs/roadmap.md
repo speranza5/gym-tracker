@@ -159,12 +159,13 @@ salto a un dominio externo se sienta como un paso deliberado, no un
 click que te saca de la app sin aviso. Ver
 [`etapa-14-analisis.md`](./etapa-14-analisis.md) para el spec completo.
 
-## Etapa 15 — Welcome tour de primer login 💭
+## Etapa 15 — Welcome tour de primer login 🔜
 
 Recorrido guiado (tooltips/spotlight sobre el empty state de la Etapa 13)
 que se muestra una sola vez, la primera vez que un usuario nuevo inicia
 sesión. Depende de la Etapa 13 porque recorre justamente esas opciones
-nuevas.
+nuevas. Ver [`etapa-15-analisis.md`](./etapa-15-analisis.md) para el
+spec completo.
 
 ## Etapa 16 — Endpoints y herramientas MCP de progreso 💭
 
