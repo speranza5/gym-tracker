@@ -100,16 +100,21 @@ antes de Google.
 
 ## Checklist de implementación
 
-- [ ] `Login.jsx` + CSS (`.login-screen`, `.login-screen__back`) y el
+- [x] `Login.jsx` + CSS (`.login-screen`, `.login-screen__back`) y el
       `display: flex` agregado a `.landing__cta` en `App.css`.
-- [ ] `Landing.jsx` — renombrar `onSignIn` → `onContinue` en la firma y
+- [x] `Landing.jsx` — renombrar `onSignIn` → `onContinue` en la firma y
       en los dos usos de `LandingCta`.
-- [ ] `App.jsx` — importar `Login`, chequeo de `screen === 'login'`
+- [x] `App.jsx` — importar `Login`, chequeo de `screen === 'login'`
       antes del `if (!user) return <Landing />`, pasar `onContinue`
       nuevo a `Landing`.
-- [ ] Confirmar visualmente en el browser: "Empezar ahora" en la landing
-      (hero y cierre) lleva a la pantalla de login sin salir del sitio,
-      "volver" regresa a la landing, el botón pasa a "Redirigiendo…"
-      deshabilitado apenas se toca, "Continuar con Google" dispara el
-      redirect real a Google, y se ve bien en mobile y desktop (mismo
-      criterio que la landing).
+- [x] Confirmar visualmente en el browser: verificado con una página de
+      preview temporal (`?preview`, montando `Login` directo con
+      callbacks no-op), borrada después de usarla — se ve bien en mobile
+      y desktop, back button, título, párrafo de contexto, botón con
+      ícono `LogIn` y letra chica todos en su lugar. También confirmado
+      que la landing real sigue renderizando sin errores de consola tras
+      el rename de `onSignIn`→`onContinue`. **No verificado con un click
+      real de punta a punta** (Landing → Login → "Continuar con Google" →
+      Google real → vuelta): el wiring es el mismo patrón de navegación
+      por `screen` ya usado en el resto de `App.jsx`, revisado por
+      lectura, pero vale un click real la primera vez.

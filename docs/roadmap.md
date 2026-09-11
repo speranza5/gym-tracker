@@ -149,7 +149,7 @@ destrabar un bug de alcance real: hoy `ConnectMcp` es inalcanzable sin
 tener ya una rutina cargada. Ver
 [`etapa-13-analisis.md`](./etapa-13-analisis.md) para el spec completo.
 
-## Etapa 14 — Pantalla intermedia de login 🔜
+## Etapa 14 — Pantalla intermedia de login ✅
 
 Entre la landing (Etapa 12) y el redirect externo a Google hay hoy un
 salto directo: tocar el CTA dispara `signInWithOAuth` sin ningún paso

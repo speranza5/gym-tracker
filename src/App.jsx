@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Dumbbell, Menu } from 'lucide-react'
 import { Landing } from './components/Landing'
+import { Login } from './components/Login'
 import { FileUpload } from './components/FileUpload'
 import { ConnectMcp } from './components/openTracker/ConnectMcp'
 import { DayTabs } from './components/DayTabs'
@@ -52,7 +53,10 @@ function App() {
   }
 
   if (!user) {
-    return <Landing onSignIn={signInWithGoogle} />
+    if (screen === 'login') {
+      return <Login onSignIn={signInWithGoogle} onBack={() => setScreen('routine')} />
+    }
+    return <Landing onContinue={() => setScreen('login')} />
   }
 
   // Chequeo antes del `!workoutData` a propósito (Etapa 13): ConnectMcp

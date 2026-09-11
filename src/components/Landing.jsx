@@ -147,7 +147,7 @@ function Faq() {
  * decisiones de precisión (qué le promete a la IA, permisos reales de
  * la API Key) documentados ahí, no repetidos acá como comentarios.
  */
-export function Landing({ onSignIn }) {
+export function Landing({ onContinue }) {
   return (
     <div className="landing">
       <section className="landing__hero">
@@ -161,7 +161,7 @@ export function Landing({ onSignIn }) {
           rutina, seguirla y ajustarla cuando lo necesites.
         </p>
         <Loop />
-        <LandingCta onClick={onSignIn} />
+        <LandingCta onClick={onContinue} />
         <p className="landing__fine-print">Con tu cuenta de Google · Gratis</p>
       </section>
 
@@ -206,7 +206,7 @@ export function Landing({ onSignIn }) {
 
       <section className="landing__closing-cta">
         <h2 className="landing__pillar-title">Tu entrenamiento, conectado con tu IA.</h2>
-        <LandingCta onClick={onSignIn} />
+        <LandingCta onClick={onContinue} />
         <p className="landing__fine-print">Con tu cuenta de Google · Gratis</p>
       </section>
     </div>
