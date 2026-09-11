@@ -23,9 +23,11 @@ timeline
     Etapa 11 : Progresión de cargas por ejercicio (gráficos)
     Etapa 12 : Landing pública + login obligatorio
     Etapa 13 : Empty state para usuario logueado sin rutina
-    Etapa 14 : Welcome tour de primer login
-    Etapa 15 : Endpoints y herramientas MCP de progreso
-    Etapa 16 : App mobile
+    Etapa 14 : Pantalla intermedia de login
+    Etapa 15 : Welcome tour de primer login
+    Etapa 16 : Endpoints y herramientas MCP de progreso
+    Etapa 17 : Animaciones y microinteracciones
+    Etapa 18 : App mobile
 ```
 
 ## Etapa 1 — MVP: Excel + checklist diaria ✅
@@ -147,14 +149,24 @@ destrabar un bug de alcance real: hoy `ConnectMcp` es inalcanzable sin
 tener ya una rutina cargada. Ver
 [`etapa-13-analisis.md`](./etapa-13-analisis.md) para el spec completo.
 
-## Etapa 14 — Welcome tour de primer login 💭
+## Etapa 14 — Pantalla intermedia de login 🔜
+
+Entre la landing (Etapa 12) y el redirect externo a Google hay hoy un
+salto directo: tocar el CTA dispara `signInWithOAuth` sin ningún paso
+intermedio propio de Gym Tracker. Se agrega una pantalla de login
+propia — con su propio botón "Continuar con Google" — para que ese
+salto a un dominio externo se sienta como un paso deliberado, no un
+click que te saca de la app sin aviso. Ver
+[`etapa-14-analisis.md`](./etapa-14-analisis.md) para el spec completo.
+
+## Etapa 15 — Welcome tour de primer login 💭
 
 Recorrido guiado (tooltips/spotlight sobre el empty state de la Etapa 13)
 que se muestra una sola vez, la primera vez que un usuario nuevo inicia
 sesión. Depende de la Etapa 13 porque recorre justamente esas opciones
 nuevas.
 
-## Etapa 15 — Endpoints y herramientas MCP de progreso 💭
+## Etapa 16 — Endpoints y herramientas MCP de progreso 💭
 
 Nuevos endpoints en la API pública (ej. `GET /api/v1/progress/summary`) y
 las herramientas MCP correspondientes en
@@ -164,7 +176,18 @@ algo como "¿cómo vengo con mi rutina?" con datos reales. Depende de las
 Etapas 9 a 11: sin sesiones ni estadísticas guardadas del lado de
 gym-tracker, no hay nada que exponer.
 
-## Etapa 16 — App mobile 💭
+## Etapa 17 — Animaciones y microinteracciones 💭
+
+Hoy ningún cambio de pantalla en la app tiene transición — todos son
+instantáneos (Landing↔Login de la Etapa 14 incluida, a propósito, para
+no introducir un patrón de animación aislado). Anotado como visión
+durante el análisis de la Etapa 14: la app en general podría beneficiarse
+de un sistema de motion consistente (transiciones entre pantallas,
+microinteracciones en botones/tarjetas), pero es una decisión de diseño
+transversal a toda la app, no algo para resolver de forma puntual en una
+sola pantalla.
+
+## Etapa 18 — App mobile 💭
 
 No definido si sería una app nativa, una PWA instalable, o un wrapper tipo
 Capacitor/Expo sobre el mismo frontend. En cualquier caso, consumiría la

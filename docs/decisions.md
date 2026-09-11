@@ -536,6 +536,6 @@ alternativa, es una versión incompleta.
   archivos por otra razón.
 - El README (`Objetivo` #1: "usable sin login, modo invitado") queda
   desactualizado y se actualiza como parte de esta etapa.
-- Etapa 13 (empty state para usuario logueado sin rutina) y Etapa 14
+- Etapa 13 (empty state para usuario logueado sin rutina) y Etapa 15
   (welcome tour) pasan a estar desbloqueadas — ambas asumían login
   obligatorio ya vigente.

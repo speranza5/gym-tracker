@@ -45,7 +45,7 @@ ese candado.
 
 ## Fuera de alcance (pospuesto)
 
-- **Welcome tour** (Etapa 14) — depende de esta etapa, no al revés.
+- **Welcome tour** (Etapa 15) — depende de esta etapa, no al revés.
 - **Polling/tiempo real** para detectar que la IA terminó de armar la
   rutina — un botón de refresco manual alcanza; agregar polling o un
   websocket para este caso de uso (una sola vez, al arrancar) sería

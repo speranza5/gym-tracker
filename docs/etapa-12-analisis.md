@@ -46,7 +46,7 @@ sistema con un loop, no una lista de features sueltas.
 | Mientras se resuelve la sesión (`authLoading === true`) | Pantalla de carga mínima — nunca se muestra la landing ni un parpadeo landing→app a alguien que en realidad ya tiene sesión |
 | Contenido de la landing | Landing comercial de 6 secciones: hero → pilar de trackeo → pilar de IA → Open Tracker (marca) → FAQ → CTA de cierre — no un hero chico con 4 bullets, ver detalle abajo |
 | Eje central del mensaje | Dos pilares con el mismo peso: **trackeo** (checklist, racha, progresión — esto es lo que da insights reales para mejorar) e **interacción con la IA** (armar y seguir la rutina por chat vía Open Tracker/MCP). Excel pasa a ser una nota secundaria dentro del pilar de IA, no una sección propia |
-| ¿La IA "da insights" en la landing? | No — se promete solo lo que ya existe hoy (`getRoutine`/`replaceRoutine`, Etapa 7 ✅). Los insights (racha, consistencia, progresión de cargas) son del pilar de trackeo, no del de IA. Ver nota de precisión abajo — la Etapa 15 (herramientas MCP de progreso) todavía no está construida |
+| ¿La IA "da insights" en la landing? | No — se promete solo lo que ya existe hoy (`getRoutine`/`replaceRoutine`, Etapa 7 ✅). Los insights (racha, consistencia, progresión de cargas) son del pilar de trackeo, no del de IA. Ver nota de precisión abajo — la Etapa 16 (herramientas MCP de progreso) todavía no está construida |
 | Texto del CTA | **Cambia de "Entrar" a "Empezar ahora"** (feedback v4, punto 2) — más orientado a acción y más coherente con el nuevo framing de loop/sistema. Nunca menciona "Google" en el botón; el mecanismo de login queda en letra chica debajo, formato fijo: "Con tu cuenta de Google · Gratis" |
 | ¿Se agrega una sección nueva para el loop/modelo mental? | No — feedback v4 punto 7 pide explícitamente mantener las 6 secciones. El loop (puntos 1 y 6 del feedback) se resuelve como un elemento visual compacto **dentro del hero**; el modelo mental Gym Tracker/Open Tracker (punto 5) se resuelve **dentro de la sección 4** (Open Tracker) — ninguno de los dos suma una sección nueva |
 | Orden de aparición: beneficio vs. mecanismo técnico (IA) | Se invierte respecto a v3: primero qué puede hacer el usuario con su IA (lenguaje no técnico), después cómo funciona (MCP/Open Tracker) — feedback v4 punto 4. "MCP" ya no aparece en los bullets del pilar de IA, solo en la sección 4 |
@@ -79,7 +79,7 @@ sistema con un loop, no una lista de features sueltas.
   ADR #16, alternativa descartada.
 - **Empty state con plantilla/guía MCP para usuario logueado sin rutina**
   — eso es exactamente la Etapa 13, que depende de esta.
-- **Welcome tour** (Etapa 14).
+- **Welcome tour** (Etapa 15).
 - **Modo claro** en la landing — la app entera sigue con
   `color-scheme: dark` fijo (mismo criterio que la Etapa 11).
 
@@ -124,7 +124,7 @@ con la IA. Antes de escribir el copy, separar qué de eso ya existe hoy:
 | Armar la rutina desde cero, charlando (`replaceRoutine`) | ✅ Etapa 7 |
 | Ajustarla / actualizarla (`replaceRoutine`) | ✅ Etapa 7 |
 | Leerla para responder "¿qué me toca hoy?" (`getRoutine`) | ✅ Etapa 7 |
-| Responder "¿cómo vengo?" con datos reales de progreso/racha | ❌ Etapa 15, todavía 💭, sin implementar |
+| Responder "¿cómo vengo?" con datos reales de progreso/racha | ❌ Etapa 16, todavía 💭, sin implementar |
 
 Por eso la landing promete **"armar y seguir la rutina" por chat** (ambas
 reales, Etapa 7) pero **no** promete que la IA te da insights de progreso
@@ -132,7 +132,7 @@ reales, Etapa 7) pero **no** promete que la IA te da insights de progreso
 racha, estadísticas, progresión de cargas), no una respuesta de chat.
 "Buenos insights para mejorar, de forma simple" se cumple con los
 gráficos/estadísticas propios de la app, no con una promesa de IA que
-todavía no está construida. Si en algún momento se prioriza la Etapa 15,
+todavía no está construida. Si en algún momento se prioriza la Etapa 16,
 ahí sí valdría la pena sumar un tercer pilar ("preguntale a tu IA cómo
 venís") — no antes.
 
