@@ -188,16 +188,15 @@ gym-tracker, no hay nada que exponer.
 > `gym-tracker-mcp/docs/etapa-16-analisis.md` (mitad MCP, implementada y
 > desplegada). Las dos mitades están hechas.
 
-## Etapa 17 — Animaciones y microinteracciones 💭
+## Etapa 17 — Animaciones y microinteracciones ✅
 
-Hoy ningún cambio de pantalla en la app tiene transición — todos son
-instantáneos (Landing↔Login de la Etapa 14 incluida, a propósito, para
-no introducir un patrón de animación aislado). Anotado como visión
-durante el análisis de la Etapa 14: la app en general podría beneficiarse
-de un sistema de motion consistente (transiciones entre pantallas,
-microinteracciones en botones/tarjetas), pero es una decisión de diseño
-transversal a toda la app, no algo para resolver de forma puntual en una
-sola pantalla.
+Hecha (ver [`etapa-17-analisis.md`](./etapa-17-analisis.md) y
+[`decisions.md` #20](./decisions.md#20-sistema-de-motion-con-tokens-css-se-supera-la-postura-sin-animaciones-etapa-17)):
+sistema mínimo de motion con tokens en `index.css`, las 8 transiciones
+existentes migradas, feedback en botones/tarjetas, toast con entrada y
+salida, feedback al marcar ejercicios, pulso único al 100%, y fade-in de
+entrada entre pantallas (opción 1, solo CSS, sin cambios en `App.jsx`).
+La postura "sin animaciones" de la Etapa 14 queda superada por ADR.
 
 ## Etapa 18 — App mobile 💭
 

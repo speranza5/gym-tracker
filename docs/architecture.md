@@ -246,6 +246,11 @@ El detalle completo, con alternativas y trade-offs, está en
   para que `gym-tracker-mcp` resuelva identidad real de usuario (login de
   Google) y la API Key correspondiente, sin que ese repo acceda nunca a
   Supabase directamente — ver [`decisions.md` #13](./decisions.md#13-endpoints-internos-para-el-authorization-server-de-gym-tracker-mcp).
+- **Sistema de motion con tokens en `index.css`** (`--motion-fast/base/slow`,
+  `--ease/--ease-out`, `--spin-duration`), no duraciones hardcodeadas —
+  ningún componente define tiempos propios; el guard de
+  `prefers-reduced-motion` vive ahí mismo — ver [`decisions.md`
+  #20](./decisions.md#20-sistema-de-motion-con-tokens-css-se-supera-la-postura-sin-animaciones-etapa-17).
 
 ## Limitaciones conocidas
 

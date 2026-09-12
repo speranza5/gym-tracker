@@ -1,3 +1,49 @@
+/* Entrada de pantallas, solo fade-in (Etapa 17.7, opción 1): cada pantalla
+   monta fresco al navegar, así la animación se repite sola. Sin cross-fade:
+   la saliente se desmonta en el mismo frame. */
+@keyframes screen-enter {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.app,
+.app-loading,
+.landing,
+.login-screen,
+.upload-screen,
+.open-tracker,
+.stats-view {
+  animation: screen-enter var(--motion-base) var(--ease-out);
+}
+
+/* Feedback consistente de botones y tarjetas (Etapa 17.3) */
+button {
+  transition: transform var(--motion-fast) var(--ease);
+}
+
+button:active {
+  transform: scale(0.97);
+}
+
+button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+@media (hover: hover) {
+  button:hover {
+    filter: brightness(1.1);
+  }
+
+  /* Tres lados nada más: el izquierdo lleva el color del bloque y se preserva */
+  .exercise-card:hover,
+  .focus-card:hover {
+    border-top-color: var(--accent);
+    border-right-color: var(--accent);
+    border-bottom-color: var(--accent);
+  }
+}
+
 .app {
   display: flex;
   flex-direction: column;
@@ -142,7 +188,17 @@
   height: 100%;
   background: linear-gradient(90deg, var(--accent), var(--accent-strong));
   border-radius: 999px;
-  transition: width 0.3s ease;
+  transition: width var(--motion-slow) var(--ease);
+}
+
+@keyframes complete-pulse {
+  0% { filter: brightness(1); }
+  50% { filter: brightness(1.7); }
+  100% { filter: brightness(1); }
+}
+
+.progress-bar__fill.is-complete {
+  animation: complete-pulse var(--motion-slow) var(--ease);
 }
 
 .progress-bar__footer {
@@ -221,7 +277,11 @@
   border-radius: var(--radius);
   padding: 14px;
   margin-bottom: 10px;
-  transition: opacity 0.2s ease;
+  transition: opacity var(--motion-fast) var(--ease), border-color var(--motion-fast) var(--ease), transform var(--motion-fast) var(--ease);
+}
+
+.exercise-card:active {
+  transform: scale(0.98);
 }
 
 .exercise-card.is-checked {
@@ -245,6 +305,7 @@
   align-items: center;
   justify-content: center;
   color: transparent;
+  transition: background-color var(--motion-fast) var(--ease), border-color var(--motion-fast) var(--ease), color var(--motion-fast) var(--ease);
 }
 
 .exercise-card.is-checked .exercise-card__checkbox {
@@ -288,7 +349,7 @@
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   background: var(--bg);
-  transition: border-color 0.15s ease;
+  transition: border-color var(--motion-fast) var(--ease);
 }
 
 .exercise-card__weight:focus-within {
@@ -326,7 +387,7 @@
 .exercise-card__chevron {
   flex: 0 0 auto;
   color: var(--text-muted);
-  transition: transform 0.2s ease;
+  transition: transform var(--motion-base) var(--ease);
 }
 
 .exercise-card__chevron.is-open {
@@ -489,7 +550,7 @@
 }
 
 .upload-screen__refresh .is-spinning {
-  animation: spin 0.8s linear infinite;
+  animation: spin var(--spin-duration) linear infinite;
 }
 
 .upload-screen__tutorial-link {
@@ -611,6 +672,7 @@
   padding: 28px 22px;
   gap: 14px;
   text-align: left;
+  transition: border-color var(--motion-fast) var(--ease);
 }
 
 .focus-card__block {
@@ -668,7 +730,7 @@
   border-radius: var(--radius-sm);
   background: var(--bg-elevated);
   color: var(--text);
-  transition: border-color 0.15s ease;
+  transition: border-color var(--motion-fast) var(--ease);
   -moz-appearance: textfield;
 }
 
@@ -805,7 +867,7 @@
   background: rgba(0, 0, 0, 0.5);
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.2s ease;
+  transition: opacity var(--motion-base) var(--ease);
   z-index: 50;
 }
 
@@ -828,7 +890,7 @@
   background: var(--bg-elevated);
   border-right: 1px solid var(--border);
   transform: translateX(-100%);
-  transition: transform 0.2s ease;
+  transition: transform var(--motion-base) var(--ease);
   z-index: 51;
 }
 
@@ -1316,7 +1378,7 @@
   position: fixed;
   left: 50%;
   bottom: 24px;
-  transform: translateX(-50%);
+  transform: translateX(-50%) translateY(8px);
   background: var(--bg-elevated);
   border: 1px solid var(--border);
   color: var(--text);
@@ -1326,6 +1388,17 @@
   font-weight: 600;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
   z-index: 70;
+  opacity: 0;
+  transition:
+    opacity var(--motion-base) var(--ease-out),
+    transform var(--motion-base) var(--ease-out);
+  /* Sin interacción propia: que nunca tape toques, ni siquiera durante la salida */
+  pointer-events: none;
+}
+
+.toast--visible {
+  opacity: 1;
+  transform: translateX(-50%);
 }
 
 /* --- Stats screen --- */

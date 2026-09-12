@@ -17,7 +17,30 @@
   --radius-sm: 10px;
   --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
 
+  --motion-fast: 120ms;    /* feedback directo: hover, active, border */
+  --motion-base: 200ms;    /* lo que se mueve o aparece */
+  --motion-slow: 320ms;    /* recorridos largos: barra de progreso, drawer */
+  --ease: cubic-bezier(0.2, 0, 0.2, 1);
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --spin-duration: 0.8s;
+
   font-family: var(--font-sans);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-fast: 0ms;
+    --motion-base: 0ms;
+    --motion-slow: 0ms;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 * {

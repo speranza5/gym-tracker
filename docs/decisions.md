@@ -685,3 +685,66 @@ usada solo por el frontend — una inconsistencia contra la decisión 10
   descartó tras el deploy porque el edge de Netlify normaliza `%2F` a `/`
   y los nombres con "/" nunca llegaban al handler (ver nota de precisión
   en `etapa-16-analisis.md`). En query, `URLSearchParams` ya decodifica.
+
+---
+
+## 20. Sistema de motion con tokens CSS: se supera la postura "sin animaciones" (Etapa 17)
+
+**Contexto:** el roadmap (Etapa 17) y la Etapa 14 decidieron
+deliberadamente que ningún cambio de pantalla tuviera transición —
+Landing↔Login instantáneo "para no introducir un patrón de animación
+aislado" —, y la Etapa 15 aceptó el `opacity 0.2s` interno de Joyride
+como **excepción** (ADR #17), no como precedente. Mientras tanto la app
+acumuló **ocho transiciones hardcodeadas** en `src/App.css` con cuatro
+duraciones distintas sin relación entre sí, y `src/index.css` no tiene
+un solo token de motion. Ver
+[`etapa-17-analisis.md`](./etapa-17-analisis.md) para el análisis
+funcional completo.
+
+**Decisión:** igual que la Etapa 12 cuando revirtió el modo invitado,
+esta ADR va **antes de tocar código**: se adopta un sistema mínimo de
+motion que supera la postura "sin animaciones". Tres duraciones
+(`--motion-fast: 120ms`, `--motion-base: 200ms`, `--motion-slow: 320ms`),
+dos curvas (`--ease`, `--ease-out`) y `--spin-duration`, todas en
+`index.css` — ninguna duración nueva hardcodeada (R-17.1). Las ocho
+transiciones existentes se migran a esos tokens sin cambiar su
+comportamiento percibido. El guard de `prefers-reduced-motion` va en la
+primera sub-fase (17.1), no al final. Las transiciones entre pantallas
+(17.7) quedan como opcionales, solo animando la entrada.
+
+**Alternativas consideradas:**
+- Mantener "sin animaciones" indefinidamente — descartada: la postura
+  original protegía contra un patrón aislado, pero la app ya tiene ocho
+  transiciones sueltas sin sistema; quedarse quieto no preserva
+  coherencia, preserva dispersión.
+- Animar pantallas puntuales sin sistema (lo que la Etapa 14 evitó a
+  propósito) — descartada por la misma razón que entonces: sin tokens
+  compartidos, cada animación nueva es otro valor suelto.
+- Librería de animación (`framer-motion`, `react-transition-group`) —
+  descartada (R-17.9): CSS con variables alcanza para este alcance, y una
+  dependencia nueva contradice el criterio de simplicidad del proyecto.
+- Poner el guard de reduced-motion al final, auditando lo agregado —
+  descartada: poniéndolo en la 17.1, todas las sub-fases siguientes lo
+  heredan gratis.
+
+**Motivos:** lo que cambió respecto de la Etapa 14 es que ya no es un
+patrón aislado, porque ahora hay un sistema — exactamente la condición
+que faltaba entonces. Los cuatro valores actuales (0.15s / 0.2s / 0.3s)
+colapsan a tres escalones (120ms / 200ms / 320ms, diferencias
+imperceptibles) a cambio de una escala cerrada; el spin queda aparte
+por ser un loop, no una transición. El guard usa `0.01ms` y no `0`
+porque con `0` algunos navegadores no disparan `transitionend`. La
+excepción de Joyride (ADR #17) sigue vigente como tal: esta etapa no
+reabre el tour.
+
+**Consecuencias:**
+- `index.css` suma los únicos tokens de tiempo del proyecto, junto a
+  los de color/radio/tipografía; ningún componente define duraciones
+  propias (ver `architecture.md` y `AGENTS.md`).
+- Sin animación de "tachado" progresivo al marcar ejercicios, sin
+  confetti/sonido/modal al 100% (un pulso único, no repetido), sin
+  sombras nuevas, sin tocar Recharts ni Joyride — cada "no" es una
+  decisión registrada en el análisis, no una omisión.
+- Si la 17.7 (transiciones entre pantallas) no se siente bien, no se
+  hace y la etapa se cierra igual: las sub-fases 17.1–17.6 ya entregan
+  el sistema; documentarlo como pendiente explícito en `handoff.md`.

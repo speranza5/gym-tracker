@@ -68,6 +68,7 @@ frontend.
 | **Open Tracker — `GET /api/v1/progress/summary`** (mitad repo; tools MCP pendientes en el otro repo) | ✅ | `netlify/functions/progress-summary.js`, `summarizeProgress` en `src/domain/progress.js` |
 | **Open Tracker — `GET /api/v1/progress/exercises/{nombre}`** (mitad repo; tools MCP pendientes en el otro repo) | ✅ | `netlify/functions/progress-exercise.js`, `buildExerciseSeries` en `src/domain/progress.js` |
 | Lógica de stats en el dominio (`src/utils/statsAggregation.js` movido a `src/domain/progress.js`) | ✅ | `src/domain/progress.js`, `src/components/StatsView.jsx` |
+| Sistema de motion (tokens en `index.css`, guard de reduced-motion, toast/check/pulso-100%/entrada de pantallas) | ✅ | `src/index.css`, `src/App.css`, `Toast.jsx`, `ProgressBar.jsx` (ver `decisions.md` #20) |
 
 ## Funcionalidades pendientes (explícitamente fuera de alcance hasta ahora)
 

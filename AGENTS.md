@@ -39,7 +39,7 @@ válida". Excel, la API y el futuro MCP la llaman por igual — no se duplica.
 ## Convenciones
 
 - **Sin TypeScript.** JS plano + JSDoc donde el tipo no es obvio (referencia de estilo: `src/domain/routine.js`).
-- **Sin CSS framework.** Variables en `src/index.css` (`--bg`, `--accent`, `--border`, `--radius`). Reusalas, no inventes colores.
+- **Sin CSS framework.** Variables en `src/index.css` (`--bg`, `--accent`, `--border`, `--radius`). Reusalas, no inventes colores. Las duraciones de animación salen de los tokens de motion (`--motion-fast/base/slow`, `--ease/--ease-out`), nunca hardcodeadas.
 - **Comentarios explican el "por qué", nunca el "qué".** El código se nombra para explicarse solo.
 - **Nombres:** componentes `PascalCase.jsx`, hooks `useAlgo.js`, utils/dominio `camelCase.js`.
 - **Idioma:** código, comentarios y docs en español.
