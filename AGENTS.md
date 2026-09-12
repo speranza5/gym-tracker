@@ -42,7 +42,10 @@ válida". Excel, la API y el futuro MCP la llaman por igual — no se duplica.
 - **Sin CSS framework.** Variables en `src/index.css` (`--bg`, `--accent`, `--border`, `--radius`). Reusalas, no inventes colores.
 - **Comentarios explican el "por qué", nunca el "qué".** El código se nombra para explicarse solo.
 - **Nombres:** componentes `PascalCase.jsx`, hooks `useAlgo.js`, utils/dominio `camelCase.js`.
-- **Idioma:** código, comentarios y docs en español. Mensajes de commit en inglés, imperativos ("Add X", "Fix Y").
+- **Idioma:** código, comentarios y docs en español.
+- **Commits:** subject imperativo en inglés. **Body obligatorio** explicando
+  el *por qué* y las alternativas descartadas — no el *qué*, que ya está en
+  el diff. Cerrar con `Co-Authored-By: <modelo> <noreply@anthropic.com>`. Ver `git log` para el estilo exacto.
 - **Subcarpetas en `components/`** solo cuando una feature ya tiene 3+ componentes propios (ej. `openTracker/`).
 
 ## Comandos
