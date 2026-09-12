@@ -641,3 +641,45 @@ revisar esta ADR #7).
   rompe hasta actualizar `GYM_TRACKER_API_KEY` a mano.
 - Los DTOs de summary/validate son contrato público (los espeja
   `gym-tracker-mcp`): no cambian sin versionar después del deploy.
+
+---
+
+## 19. Etapa 16 (mitad repo): stats al dominio y match exacto con reintento
+
+**Contexto:** la Etapa 16, mitad de este repo (ver
+[`etapa-16-analisis.md`](./etapa-16-analisis.md)), expone el progreso real
+en la API. La lógica de agregación vivía en `src/utils/statsAggregation.js`,
+usada solo por el frontend — una inconsistencia contra la decisión 10
+(dominio compartido), que esta etapa cierra.
+
+**Decisiones:**
+
+1. **La lógica de stats sube a `src/domain/progress.js`.**
+   `countDistinctDays`, `topExercises` y `buildExerciseProgress` se mueven
+   tal cual (sin cambiar comportamiento — verificado con `lint` + `build`
+   antes de escribir ninguna Function); se agregan `summarizeProgress` y
+   `buildExerciseSeries` + los schemas Zod de los dos DTOs.
+   `src/utils/statsAggregation.js` se borra; `StatsView.jsx` cambia su
+   import. (`ExerciseProgressChart.jsx` no se toca: recibe datos por
+   props, nunca importó el módulo.)
+2. **Match de nombre exacto y case-sensitive, con `availableExercises` en
+   el 404.** Sin fuzzy match ni normalización: si el nombre no existe en
+   el rango, `404 EXERCISE_NOT_FOUND` incluye los nombres disponibles para
+   que el consumidor (un LLM) reintente con uno válido en vez de rendirse.
+   Si se recorta ese campo, la tool del otro repo pierde su mejor
+   propiedad.
+3. **`parseRange` compartido en `_lib/range.js`** (default 30 días,
+   `400 INVALID_RANGE`): las dos Functions lo usan, no se duplica.
+4. **Rango parcial rechazado**: si se pasa `from` o `to` solo, es 400 —
+   no se completa con defaults. Un rango pedido a medias es un pedido
+   malformado, no uno con defaults.
+
+**Consecuencias:**
+- `history` se cuenta por fechas distintas (una fecha puede tener 2 filas);
+  pesos nulos se excluyen de las series, nunca se promedian como 0.
+- El benchmark es estado actual (sin filtro de rango); `lastSessionAt`
+  puede ser `null`; sin datos el summary es 200 con ceros (ver nota
+  anti-armonización de la Etapa 6).
+- `progress-exercise.js` es la primera Function con handler de dos
+  argumentos (`request, context`) — `context.params.name` llega ya
+  decodificado.

@@ -65,6 +65,9 @@ frontend.
 | **Open Tracker — `GET /api/v1/routine/summary`** | ✅ | `netlify/functions/routine-summary.js`, `summarizeRoutine` en `src/domain/routine.js` |
 | **Open Tracker — `POST /api/v1/routine/validate`** | ✅ | `netlify/functions/routine-validate.js` (`200 {valid}` en vez de 400, ver `decisions.md` #18) |
 | Regeneración de API Key (endpoint interno + botón en Open Tracker) | ✅ | `netlify/functions/api-key-regenerate.js`, `src/utils/apiKeyRegen.js` |
+| **Open Tracker — `GET /api/v1/progress/summary`** (mitad repo; tools MCP pendientes en el otro repo) | ✅ | `netlify/functions/progress-summary.js`, `summarizeProgress` en `src/domain/progress.js` |
+| **Open Tracker — `GET /api/v1/progress/exercises/{nombre}`** (mitad repo; tools MCP pendientes en el otro repo) | ✅ | `netlify/functions/progress-exercise.js`, `buildExerciseSeries` en `src/domain/progress.js` |
+| Lógica de stats en el dominio (`src/utils/statsAggregation.js` movido a `src/domain/progress.js`) | ✅ | `src/domain/progress.js`, `src/components/StatsView.jsx` |
 
 ## Funcionalidades pendientes (explícitamente fuera de alcance hasta ahora)
 

@@ -299,6 +299,110 @@ tool). Ver [`etapa-6-analisis.md`](./etapa-6-analisis.md#nota-de-precisión-por-
 **Response `400 Bad Request`** — solo si el body ni siquiera es JSON
 válido (`INVALID_ROUTINE`, igual que el `PUT`).
 
+### `GET /api/v1/progress/summary`
+
+Resumen del progreso **real** del usuario en un rango: días completados
+(marcadores automáticos de `history`), sesiones registradas y top
+ejercicios. No genera datos nuevos — es una segunda salida de los que ya
+guarda el frontend.
+
+**Autenticación:** requerida (`Authorization: Bearer <api_key>`).
+
+**Parámetros:** query params opcionales `from` / `to` (fechas
+`YYYY-MM-DD`). Sin params, default **últimos 30 días**. Si se pasa uno,
+hay que pasar los dos.
+
+**Request**
+
+```bash
+curl "https://gym-tracker.carlossperanza.fyi/api/v1/progress/summary?from=2026-08-13&to=2026-09-12" \
+  -H "Authorization: Bearer gt_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+```
+
+**Response `200 OK`**
+
+```json
+{
+  "range": { "from": "2026-08-13", "to": "2026-09-12" },
+  "completedDays": 18,
+  "sessionsRecorded": 22,
+  "lastSessionAt": "2026-09-11T21:04:33.000Z",
+  "topExercises": [
+    { "name": "Press banca", "count": 12 },
+    { "name": "Sentadilla", "count": 11 }
+  ],
+  "exercisesTracked": 14
+}
+```
+
+- `completedDays`: fechas distintas en `history` (un día puede tener 2
+  filas si se completaron 2 días de rutina esa fecha).
+- `sessionsRecorded`: filas de `training_sessions` (varias el mismo día
+  cuentan separado).
+- `lastSessionAt`: la más reciente del rango, o `null`.
+- `topExercises`: top 5 por entradas marcadas hechas.
+- `exercisesTracked`: nombres distintos con al menos un peso registrado.
+- Sin datos en el rango → `200` con ceros y `topExercises: []`, **no** un
+  404. No haber entrenado es un cero legítimo (a propósito distinto de
+  `GET .../routine/summary`, donde no tener rutina es `404`).
+
+**Response `400 Bad Request`** — rango inválido (`INVALID_RANGE`):
+formato que no es fecha real, solo una de las dos puntas, o `from`
+posterior a `to`.
+
+### `GET /api/v1/progress/exercises/{nombre}`
+
+Serie temporal de peso de **un** ejercicio en el rango, más su benchmark
+actual. El nombre es **exacto y case-sensitive** (igual que el
+agrupamiento del frontend); sin fuzzy match.
+
+**Autenticación:** requerida (`Authorization: Bearer <api_key>`).
+
+**Parámetros:** path param `nombre` (encodearlo en la URL: espacios,
+acentos) + query params opcionales `from` / `to` (mismo default de 30
+días que el summary).
+
+**Request**
+
+```bash
+curl "https://gym-tracker.carlossperanza.fyi/api/v1/progress/exercises/Press%20banca?from=2026-08-13&to=2026-09-12" \
+  -H "Authorization: Bearer gt_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+```
+
+**Response `200 OK`**
+
+```json
+{
+  "exerciseName": "Press banca",
+  "range": { "from": "2026-08-13", "to": "2026-09-12" },
+  "currentBenchmarkKg": 72.5,
+  "sessionCount": 9,
+  "points": [
+    { "recordedAt": "2026-08-14T20:11:02.000Z", "weightKg": 70 },
+    { "recordedAt": "2026-08-21T19:48:55.000Z", "weightKg": 72.5 }
+  ]
+}
+```
+
+- `currentBenchmarkKg`: estado actual (sin filtrar por rango), o `null`.
+- `points`: ordenados por `recordedAt` ascendente; una sesión por punto
+  aunque haya varias el mismo día. Ejercicios marcados sin peso se
+  excluyen (un peso nulo no es 0 kg).
+
+**Response `404 Not Found`** — sin datos para ese nombre en el rango
+(`EXERCISE_NOT_FOUND`). El body incluye `availableExercises` (nombres que
+sí tienen datos) para reintentar:
+
+```json
+{
+  "error": {
+    "code": "EXERCISE_NOT_FOUND",
+    "message": "Sin datos para \"Press plano\" en el rango.",
+    "availableExercises": ["Press banca", "Sentadilla"]
+  }
+}
+```
+
 ### Regeneración de API Key
 
 No es un endpoint público: es un flujo desde la app (menú lateral →
@@ -324,8 +428,10 @@ Efectos de regenerar:
 | Status | Code                  | Cuándo ocurre |
 |--------|-----------------------|---------------|
 | 400    | `INVALID_ROUTINE`      | El body del `PUT` no tiene la forma esperada (ver `issues` para el detalle), o el body del `POST .../validate` ni siquiera es JSON válido. |
+| 400    | `INVALID_RANGE`        | `from`/`to` de progreso con formato inválido, rango parcial, o `from` posterior a `to`. |
 | 401    | `UNAUTHORIZED`         | Falta el header `Authorization`, o la API Key no es válida. |
 | 404    | `ROUTINE_NOT_FOUND`    | `GET` o `GET .../summary` de un usuario que todavía no cargó ninguna rutina. |
+| 404    | `EXERCISE_NOT_FOUND`   | Sin datos para ese nombre de ejercicio en el rango (ver `availableExercises` para reintentar). |
 | 405    | `METHOD_NOT_ALLOWED`   | Método HTTP no soportado sobre el endpoint (cada endpoint acepta el suyo más `OPTIONS`). |
 | 429    | `RATE_LIMITED`         | Se superó el límite de requests por minuto (ver abajo). Header `Retry-After: 60`. |
 | 500    | `INTERNAL_ERROR`       | Error inesperado del servidor. |
@@ -370,5 +476,8 @@ para tráfico de producción a gran escala.
   - `POST /api/v1/routine/validate` — valida un payload de rutina sin
     guardarlo (misma `assertValidRoutine` que corre internamente el
     `PUT`). Lo consume `validateRoutine`.
+  - `GET /api/v1/progress/summary` y `GET
+    /api/v1/progress/exercises/{nombre}` — progreso real (los consumen las
+    tools de progreso del MCP cuando se implementen en su repo).
 - **CORS:** habilitado para cualquier origen (`Access-Control-Allow-Origin: *`),
   pensado para integraciones desde cualquier cliente (apps, SDKs, browser).

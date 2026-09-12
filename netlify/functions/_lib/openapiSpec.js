@@ -15,6 +15,7 @@ async function buildRegistry() {
   const { ExerciseSchema, DaySchema, RoutineInputSchema, RoutineSummarySchema } = await import(
     '../../../src/domain/routine.js'
   )
+  const { ProgressSummarySchema, ExerciseProgressSchema } = await import('../../../src/domain/progress.js')
 
   const registry = new OpenAPIRegistry()
 
@@ -28,6 +29,8 @@ async function buildRegistry() {
   registry.register('Day', DaySchema)
   registry.register('RoutineInput', RoutineInputSchema)
   registry.register('RoutineSummary', RoutineSummarySchema)
+  registry.register('ProgressSummary', ProgressSummarySchema)
+  registry.register('ExerciseProgress', ExerciseProgressSchema)
 
   const ValidateResponseSchema = z
     .object({
@@ -132,6 +135,70 @@ async function buildRegistry() {
       },
       400: errorResponse('El body no es JSON válido.'),
       401: errorResponse('Falta el header Authorization, o la API Key no es válida.'),
+      429: errorResponse('Se superó el límite de requests por minuto.'),
+    },
+  })
+
+  const rangeParameters = [
+    {
+      name: 'from',
+      in: 'query',
+      required: false,
+      schema: { type: 'string', example: '2026-08-13' },
+      description: 'Inicio del rango (YYYY-MM-DD). Sin params: últimos 30 días.',
+    },
+    {
+      name: 'to',
+      in: 'query',
+      required: false,
+      schema: { type: 'string', example: '2026-09-12' },
+      description: 'Fin del rango (YYYY-MM-DD). Sin params: últimos 30 días.',
+    },
+  ]
+
+  registry.registerPath({
+    method: 'get',
+    path: '/api/v1/progress/summary',
+    summary: 'Obtener un resumen del progreso real del usuario autenticado',
+    tags: ['Progress'],
+    security: [{ [bearerAuth.name]: [] }],
+    parameters: rangeParameters,
+    responses: {
+      200: {
+        description:
+          'Días completados, sesiones registradas y top ejercicios del rango. Sin datos es 200 con ceros, no un error.',
+        content: { 'application/json': { schema: ProgressSummarySchema } },
+      },
+      400: errorResponse('Rango inválido (formato o `from` posterior a `to`).'),
+      401: errorResponse('Falta el header Authorization, o la API Key no es válida.'),
+      429: errorResponse('Se superó el límite de requests por minuto.'),
+    },
+  })
+
+  registry.registerPath({
+    method: 'get',
+    path: '/api/v1/progress/exercises/{name}',
+    summary: 'Obtener la serie temporal de peso de un ejercicio',
+    tags: ['Progress'],
+    security: [{ [bearerAuth.name]: [] }],
+    parameters: [
+      {
+        name: 'name',
+        in: 'path',
+        required: true,
+        schema: { type: 'string', example: 'Press banca' },
+        description: 'Nombre exacto (case-sensitive) del ejercicio. Encodear en la URL.',
+      },
+      ...rangeParameters,
+    ],
+    responses: {
+      200: {
+        description: 'Serie de pesos ordenada por fecha, más el benchmark actual.',
+        content: { 'application/json': { schema: ExerciseProgressSchema } },
+      },
+      400: errorResponse('Rango inválido (formato o `from` posterior a `to`).'),
+      401: errorResponse('Falta el header Authorization, o la API Key no es válida.'),
+      404: errorResponse('Sin datos para ese nombre en el rango (ver `availableExercises`).'),
       429: errorResponse('Se superó el límite de requests por minuto.'),
     },
   })
