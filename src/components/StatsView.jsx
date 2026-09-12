@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { ChevronLeft, ChevronRight, Search } from 'lucide-react'
 import { getPeriodRange } from '../utils/dateRange'
-import { buildExerciseProgress, countDistinctDays, topExercises } from '../utils/statsAggregation'
+import { buildExerciseProgress, countDistinctDays, topExercises } from '../domain/progress'
 import { pullAllSessions, pullHistoryInRange, pullSessionsInRange } from '../utils/cloudSync'
 import { ExerciseProgressChart } from './ExerciseProgressChart'
 

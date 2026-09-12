@@ -169,6 +169,9 @@ spec completo.
 
 ## Etapa 16 — Endpoints y herramientas MCP de progreso 💭
 
+> Mitad de este repo hecha (dominio + endpoints + docs); falta la mitad
+> MCP en `gym-tracker-mcp`. Ver nota al final de la sección.
+
 Nuevos endpoints en la API pública (ej. `GET /api/v1/progress/summary`) y
 las herramientas MCP correspondientes en
 `gym-tracker-mcp/src/mcp/server.ts` (hoy solo tiene `getRoutine` /
@@ -176,6 +179,12 @@ las herramientas MCP correspondientes en
 algo como "¿cómo vengo con mi rutina?" con datos reales. Depende de las
 Etapas 9 a 11: sin sesiones ni estadísticas guardadas del lado de
 gym-tracker, no hay nada que exponer.
+
+> Spec dividido en dos archivos, uno por repo:
+> `docs/etapa-16-analisis.md` (esta mitad, implementada) y
+> `gym-tracker-mcp/docs/etapa-16-analisis.md` (tools MCP, pendiente del
+> deploy de esto). Esta etapa se marca ✅ solo cuando las dos mitades
+> estén hechas.
 
 ## Etapa 17 — Animaciones y microinteracciones 💭
 
