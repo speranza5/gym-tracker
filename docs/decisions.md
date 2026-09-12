@@ -539,3 +539,52 @@ alternativa, es una versión incompleta.
 - Etapa 13 (empty state para usuario logueado sin rutina) y Etapa 15
   (welcome tour) pasan a estar desbloqueadas — ambas asumían login
   obligatorio ya vigente.
+
+---
+
+## 17. Tabla `profiles` + `react-joyride` para el welcome tour (Etapa 15)
+
+**Contexto:** la Etapa 15 (ver
+[`etapa-15-analisis.md`](./etapa-15-analisis.md)) muestra un recorrido
+guiado del empty state una sola vez, solo a cuentas nuevas. Hacía falta un
+lugar donde guardar "ya vio el tour" que persista entre dispositivos, y
+una forma de dibujar el overlay con spotlight.
+
+**Decisión:**
+- Tabla nueva `profiles` (`user_id` PK contra `auth.users`,
+  `welcome_tour_seen_at`, RLS propia por usuario) — es el primer dato de
+  cuenta que no es rutina/progreso/historial, así que inaugura un hogar
+  propio para este y futuros flags de usuario, en vez de colgar una
+  columna en una tabla existente con otro propósito. Backfill único al
+  desplegar: cuentas existentes marcadas como "ya visto".
+- `react-joyride` para el overlay/spotlight/tooltips (decisión del
+  usuario), con estilos mapeados a las variables de `src/index.css` y
+  `styles.floater.transition: 'none'`.
+
+**Alternativas consideradas:**
+- Columna en una tabla existente (ej. `api_keys`) — descartada: mezcla un
+  flag de producto con una tabla de credenciales; `profiles` deja el
+  modelo abierto a más datos de cuenta sin tocar tablas ajenas.
+- Tour hecho a mano (overlay + tooltips propios) — era la recomendación
+  inicial: cero dependencias y control total del "100% estático", pero se
+  optó por la librería a pedido del usuario, aceptando sus costos.
+
+**Motivos:** coherencia con el resto de la app (Supabase como fuente de
+verdad del flag, `localStorage` nunca fue opción para algo que debe
+persistir entre dispositivos) y fricción mínima de implementación para un
+tour de 3 pasos sobre tarjetas que ya existen.
+
+**Consecuencias:**
+- `react-joyride` agrega ~720 KB sin comprimir (librería + transitivas),
+  documentado como costo aceptado en el análisis de la etapa.
+- Excepción aceptada al criterio "sin animación" (Etapa 14/17): el
+  `Overlay` interno de Joyride tiene un `transition: 'opacity 0.2s'`
+  hardcodeado en JSX, no desactivable por prop — es interna a cómo la
+  librería dibuja el agujero del spotlight, no un patrón de motion del
+  proyecto.
+- `react-joyride@3` no tiene export default (solo `Joyride` nombrado) —
+  importar como `import { Joyride } from 'react-joyride'` o el build falla
+  con `MISSING_EXPORT`.
+- `WelcomeTour` recibe `shouldMark` además de `run`: la escritura del flag
+  la origina solo el camino de primera vez, el link "Ver tutorial de
+  nuevo" re-muestra sin escribir (ver análisis de la etapa).

@@ -61,6 +61,7 @@ frontend.
 | Quick Start (curl + fetch, con Base URL/API Key reales) | ✅ | `src/components/openTracker/QuickStart.jsx` |
 | Endpoints internos para `gym-tracker-mcp` (identidad + resolución de API Key) | ✅ | `netlify/functions/mcp-identity.js`, `mcp-api-key.js`, `_lib/apiKeys.js` |
 | Guía "Conectar MCP" en Open Tracker (pasos para Claude y ChatGPT) | ✅ | `src/components/openTracker/ConnectMcp.jsx` |
+| Welcome tour de primer login (spotlight sobre el empty state, una sola vez, tabla `profiles`) | ✅ | `src/components/WelcomeTour.jsx` (`react-joyride`), `src/utils/profile.js`, `src/components/FileUpload.jsx` |
 
 ## Funcionalidades pendientes (explícitamente fuera de alcance hasta ahora)
 
@@ -170,6 +171,10 @@ Resumen — el detalle completo con alternativas y motivos está en
   este proyecto) — inflan `node_modules` pero no el bundle del navegador
   gracias al lazy-load; si esto llegara a ser un problema real, reevaluar
   contra Swagger UI (ver `decisions.md` #12).
+- **`react-joyride` agrega ~720 KB sin comprimir** (librería + transitivas,
+  ver `decisions.md` #17) — va en el bundle principal porque el tour corre
+  en la primera pantalla post-login; no se lazy-loadeó por ser un recorrido
+  de 3 pasos que debe estar listo al montar el empty state.
 
 ## Próximos pasos recomendados
 

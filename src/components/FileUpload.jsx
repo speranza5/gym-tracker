@@ -1,12 +1,25 @@
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { UploadCloud, FileSpreadsheet, Download, Bot, RefreshCw } from 'lucide-react'
 import { AuthButton } from './AuthButton'
+import { WelcomeTour } from './WelcomeTour'
+import { hasSeenWelcomeTour } from '../utils/profile'
 import { downloadRoutineTemplate } from '../utils/routineTemplate'
 
 export function FileUpload({ onFile, loading, error, user, onSignOut, onConnectAi, onRefresh }) {
   const inputRef = useRef(null)
   const [dragOver, setDragOver] = useState(false)
   const [refreshing, setRefreshing] = useState(false)
+  const [isFirstRun, setIsFirstRun] = useState(false)
+  // Contador (no booleano): cada click re-monta WelcomeTour con un key
+  // nuevo, reseteando su estado interno de "terminado".
+  const [replayCount, setReplayCount] = useState(0)
+
+  useEffect(() => {
+    if (!user?.id) return
+    hasSeenWelcomeTour(user.id).then((seen) => {
+      if (!seen) setIsFirstRun(true)
+    })
+  }, [user?.id])
 
   const handleFiles = useCallback(
     (files) => {
@@ -40,7 +53,7 @@ export function FileUpload({ onFile, loading, error, user, onSignOut, onConnectA
       </button>
 
       <div className="upload-options">
-        <div className="upload-option">
+        <div className="upload-option" id="upload-option-excel">
           <div className="upload-option__header">
             <UploadCloud size={22} className="upload-option__icon" />
             <span className="upload-option__title">Subí tu Excel</span>
@@ -70,7 +83,7 @@ export function FileUpload({ onFile, loading, error, user, onSignOut, onConnectA
           {error && <p className="upload-screen__error">{error}</p>}
         </div>
 
-        <div className="upload-option">
+        <div className="upload-option" id="upload-option-template">
           <div className="upload-option__header">
             <Download size={22} className="upload-option__icon" />
             <span className="upload-option__title">Descargá una plantilla</span>
@@ -83,7 +96,7 @@ export function FileUpload({ onFile, loading, error, user, onSignOut, onConnectA
           </button>
         </div>
 
-        <div className="upload-option">
+        <div className="upload-option" id="upload-option-ai">
           <div className="upload-option__header">
             <Bot size={22} className="upload-option__icon" />
             <span className="upload-option__title">Armala con tu IA</span>
@@ -96,6 +109,17 @@ export function FileUpload({ onFile, loading, error, user, onSignOut, onConnectA
           </button>
         </div>
       </div>
+
+      <button type="button" className="upload-screen__tutorial-link" onClick={() => setReplayCount((c) => c + 1)}>
+        Ver tutorial de nuevo
+      </button>
+
+      <WelcomeTour
+        key={`tour-${replayCount}`}
+        userId={user?.id}
+        run={isFirstRun || replayCount > 0}
+        shouldMark={isFirstRun && replayCount === 0}
+      />
     </div>
   )
 }

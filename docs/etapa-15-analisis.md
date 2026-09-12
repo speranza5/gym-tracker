@@ -24,6 +24,7 @@ arrancaban con contexto):
 | ¿Tour interrumpido (cierre de pestaña a mitad)? | No se vuelve a mostrar — se marca como visto apenas arranca (al decidir mostrarlo), no al completarlo |
 | ¿Se puede volver a ver? | Sí, pero **no** desde `SideMenu.jsx` (ver conflicto real más abajo) — un link "Ver tutorial de nuevo" dentro del propio `FileUpload.jsx` |
 | Cantidad de pasos | 3, uno por tarjeta (Excel, plantilla, IA) — ninguno extra para el botón de refresh de la Etapa 13 |
+| ¿Arranca en el beacon o en el tooltip? | Directo en el **tooltip** del paso 1, con el spotlight ya puesto sobre la tarjeta de Excel — no en el beacon (el puntito pulsante que hay que clickear). Se logra con `skipBeacon: true` en el primer step (ver "Nota de precisión: el beacon del paso 1" abajo) |
 | Alcance | Solo el empty state — no adelanta Stats/Open Tracker, que ni son alcanzables sin rutina todavía |
 | Copy | Texto nuevo, registro de instrucción ("Tocando acá podés…"), no reusa la copy de venta de la landing |
 | Interrupción por acción real | Cualquier click real en una tarjeta cierra el tour solo (ya queda marcado como visto desde que arrancó, así que no hace falta lógica extra acá) |
@@ -57,6 +58,35 @@ asumido de memoria):
   del spotlight, no un patrón de animación que este proyecto esté
   introduciendo a propósito. Todo lo demás (fade del tooltip, botones,
   transiciones del propio contenido) sí queda desactivado explícitamente.
+
+## Nota de precisión: el beacon del paso 1
+
+`continuous` **no** alcanza para que el tour arranque mostrando el
+tooltip. Leyendo el fuente de `react-joyride@3.2.0`
+(`src/modules/step.ts`):
+
+```ts
+export function shouldHideBeacon(step, state, continuous) {
+  const { action } = state;
+  const withContinuous = continuous && [ACTIONS.PREV, ACTIONS.NEXT].includes(action);
+  return step.skipBeacon || step.placement === 'center' || withContinuous;
+}
+```
+
+En el primer render la acción del estado es `START`, no `NEXT`, así que
+`withContinuous` da `false` y el beacon **sí** se renderiza. Del paso 2
+en adelante la acción ya es `NEXT` y el beacon se oculta solo. De ahí el
+síntoma: el paso 1 pide un click en un puntito y los pasos 2 y 3 abren
+directo.
+
+- **La propiedad es `skipBeacon`, no `disableBeacon`.** `disableBeacon`
+  era la API de la v2; en la 3.2.0 no existe y se ignora en silencio
+  (verificado: no aparece en `src/` ni en `dist/` del paquete).
+- **Va solo en el primer step.** Los otros dos ya lo resuelven por
+  `continuous`. Ponerlo en los tres es inofensivo pero redundante.
+- **No usar `placement: 'center'`** como atajo para saltear el beacon:
+  también lo saltea, pero centra el tooltip en la pantalla y pierde el
+  anclaje a la tarjeta.
 
 ## Fuera de alcance (pospuesto)
 
@@ -135,6 +165,9 @@ src/components/WelcomeTour.jsx
   tarjeta en `FileUpload.jsx` (`#upload-option-excel`,
   `#upload-option-template`, `#upload-option-ai`), `content` con el
   copy nuevo (registro de instrucción, ver tabla).
+- El **primer** step lleva además `skipBeacon: true`, para que el tour
+  arranque mostrando el tooltip con el spotlight sobre la tarjeta de
+  Excel en vez del beacon (ver nota de precisión arriba).
 - `<Joyride>` con `showSkipButton`, `continuous`, `styles` mapeando a
   las variables de `index.css` (`overlayColor` con `--bg` semitransparente,
   tooltip `backgroundColor: 'var(--bg-card)'`, texto `'var(--text)'`,
@@ -165,11 +198,14 @@ src/components/WelcomeTour.jsx
       Supabase, documentado arriba).
 - [ ] `npm install react-joyride`.
 - [ ] `src/utils/profile.js` — `hasSeenWelcomeTour`/`markWelcomeTourSeen`.
-- [ ] `WelcomeTour.jsx` — steps, estilos mapeados a `index.css`,
+- [ ] `WelcomeTour.jsx` — steps (con `skipBeacon: true` en el primero),
+      estilos mapeados a `index.css`,
       `styles.floater.transition: 'none'`.
 - [ ] `FileUpload.jsx` — ids en las 3 tarjetas, `useEffect` de
       `hasSeenWelcomeTour`, link "Ver tutorial de nuevo", montar
       `<WelcomeTour>`.
+- [ ] Confirmar visualmente que el paso 1 abre directo en el tooltip con
+      el spotlight sobre la tarjeta de Excel, sin beacon intermedio.
 - [ ] Confirmar visualmente en el browser: el tour aparece para una
       cuenta nueva sin fila en `profiles`, no aparece para una cuenta ya
       marcada como vista, "Saltar"/X lo cierran, tocar una tarjeta real
