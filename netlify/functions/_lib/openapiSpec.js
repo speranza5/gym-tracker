@@ -177,17 +177,18 @@ async function buildRegistry() {
 
   registry.registerPath({
     method: 'get',
-    path: '/api/v1/progress/exercises/{name}',
+    path: '/api/v1/progress/exercises',
     summary: 'Obtener la serie temporal de peso de un ejercicio',
     tags: ['Progress'],
     security: [{ [bearerAuth.name]: [] }],
     parameters: [
       {
         name: 'name',
-        in: 'path',
+        in: 'query',
         required: true,
         schema: { type: 'string', example: 'Press banca' },
-        description: 'Nombre exacto (case-sensitive) del ejercicio. Encodear en la URL.',
+        description:
+          'Nombre exacto (case-sensitive) del ejercicio. En query a propósito: en el path, el edge de Netlify normaliza %2F a "/" y los nombres con "/" nunca llegan al handler.',
       },
       ...rangeParameters,
     ],

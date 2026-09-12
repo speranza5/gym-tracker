@@ -5,7 +5,7 @@ import { parseRange } from './_lib/range.js'
 import { jsonResponse, errorResponse, preflightResponse, HttpError } from './_lib/http.js'
 import { buildExerciseProgress, buildExerciseSeries } from '../../src/domain/progress.js'
 
-export default async (request, context) => {
+export default async (request) => {
   if (request.method === 'OPTIONS') return preflightResponse()
 
   try {
@@ -16,13 +16,14 @@ export default async (request, context) => {
       throw new HttpError(405, 'METHOD_NOT_ALLOWED', `Método ${request.method} no soportado en este endpoint.`)
     }
 
-    // Netlify NO decodifica el path param: llega percent-encoded
-    // (verificado contra producción, no contra la doc).
-    let exerciseName
-    try {
-      exerciseName = decodeURIComponent(context.params.name)
-    } catch {
-      throw new HttpError(400, 'INVALID_EXERCISE_NAME', 'El nombre del ejercicio en la URL está mal encodeado.')
+    // El nombre viaja en query (?name=), no en el path: parte de los nodos
+    // del edge de Netlify normaliza %2F a "/" antes de matchear la ruta y
+    // un path param con "/" nunca llega al handler (verificado contra
+    // producción). En query, URLSearchParams ya entrega el valor
+    // decodificado — sin decodeURIComponent a mano.
+    const exerciseName = new URL(request.url).searchParams.get('name')
+    if (!exerciseName || exerciseName.trim() === '') {
+      throw new HttpError(400, 'INVALID_EXERCISE_NAME', 'Falta el query param "name" con el nombre del ejercicio.')
     }
     const { from, to } = parseRange(request.url)
     const admin = getSupabaseAdmin()
@@ -72,4 +73,4 @@ export default async (request, context) => {
   }
 }
 
-export const config = { path: '/api/v1/progress/exercises/:name' }
+export const config = { path: '/api/v1/progress/exercises' }

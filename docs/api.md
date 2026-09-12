@@ -350,7 +350,7 @@ curl "https://gym-tracker.carlossperanza.fyi/api/v1/progress/summary?from=2026-0
 formato que no es fecha real, solo una de las dos puntas, o `from`
 posterior a `to`.
 
-### `GET /api/v1/progress/exercises/{nombre}`
+### `GET /api/v1/progress/exercises?name=...`
 
 Serie temporal de peso de **un** ejercicio en el rango, más su benchmark
 actual. El nombre es **exacto y case-sensitive** (igual que el
@@ -358,14 +358,17 @@ agrupamiento del frontend); sin fuzzy match.
 
 **Autenticación:** requerida (`Authorization: Bearer <api_key>`).
 
-**Parámetros:** path param `nombre` (encodearlo en la URL: espacios,
-acentos) + query params opcionales `from` / `to` (mismo default de 30
-días que el summary).
+**Parámetros:** query param requerido `name` + query params opcionales
+`from` / `to` (mismo default de 30 días que el summary). El nombre va en
+la query a propósito, no en el path: los nombres con "/" (`%2F`) no
+sobreviven al edge de Netlify como path param (los normaliza a "/" antes
+de matchear la ruta y el request nunca llega). Encodearlo igual al armar
+la URL (espacios, acentos, barras).
 
 **Request**
 
 ```bash
-curl "https://gym-tracker.carlossperanza.fyi/api/v1/progress/exercises/Press%20banca?from=2026-08-13&to=2026-09-12" \
+curl "https://gym-tracker.carlossperanza.fyi/api/v1/progress/exercises?name=Press%20banca&from=2026-08-13&to=2026-09-12" \
   -H "Authorization: Bearer gt_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 ```
 
@@ -429,7 +432,7 @@ Efectos de regenerar:
 |--------|-----------------------|---------------|
 | 400    | `INVALID_ROUTINE`      | El body del `PUT` no tiene la forma esperada (ver `issues` para el detalle), o el body del `POST .../validate` ni siquiera es JSON válido. |
 | 400    | `INVALID_RANGE`        | `from`/`to` de progreso con formato inválido, rango parcial, o `from` posterior a `to`. |
-| 400    | `INVALID_EXERCISE_NAME` | El path param del ejercicio está mal encodeado en la URL. |
+| 400    | `INVALID_EXERCISE_NAME` | Falta el query param `name`, o el path param del ejercicio está mal encodeado en la URL. |
 | 401    | `UNAUTHORIZED`         | Falta el header `Authorization`, o la API Key no es válida. |
 | 404    | `ROUTINE_NOT_FOUND`    | `GET` o `GET .../summary` de un usuario que todavía no cargó ninguna rutina. |
 | 404    | `EXERCISE_NOT_FOUND`   | Sin datos para ese nombre de ejercicio en el rango (ver `availableExercises` para reintentar). |
@@ -478,7 +481,7 @@ para tráfico de producción a gran escala.
     guardarlo (misma `assertValidRoutine` que corre internamente el
     `PUT`). Lo consume `validateRoutine`.
   - `GET /api/v1/progress/summary` y `GET
-    /api/v1/progress/exercises/{nombre}` — progreso real (los consumen las
+    /api/v1/progress/exercises?name=...` — progreso real (los consumen las
     tools de progreso del MCP cuando se implementen en su repo).
 - **CORS:** habilitado para cualquier origen (`Access-Control-Allow-Origin: *`),
   pensado para integraciones desde cualquier cliente (apps, SDKs, browser).

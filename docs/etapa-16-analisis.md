@@ -63,7 +63,7 @@ La Etapa 6 va en su propio spec (`docs/etapa-6-analisis.md`), no acá.
 | ¿Cómo se pide el rango temporal? | **Query params opcionales** `?from=&to=` (fechas `YYYY-MM-DD`). Sin params, default **últimos 30 días**. Espeja lo que ya hace `pullSessionsInRange` para la pantalla de stats, y permite "¿cómo vine en marzo?" — que las ventanas fijas (`?period=week\|month\|year`) no permiten |
 | ¿Dónde vive la lógica de agregación? | **`src/domain/progress.js` (nuevo)**, moviendo lo que hoy está en `src/utils/statsAggregation.js`. Frontend y API llaman la misma función pura, igual que `routine.js` sirve a Excel y a la API. Es la decisión 10 aplicada: si dos transportes necesitan la misma regla, la regla va al dominio |
 | ¿Se versiona a `/api/v2`? | **No.** Son endpoints nuevos, aditivos; no cambian la forma de ningún DTO existente. `/api/v1` es el lugar correcto (ver `api.md#compatibilidad-futura`) |
-| Forma de la URL del segundo endpoint | Path param de Netlify: `path: '/api/v1/progress/exercises/:name'`, leído con `context.params.name`. **Verificado** contra la doc de Netlify Functions v2 (ver nota de precisión) |
+| Forma de la URL del segundo endpoint | **Query param**: `GET /api/v1/progress/exercises?name=...` (requerido), junto a los opcionales `?from=&to=`. Se evaluó primero path param (`:name`) y se descartó tras el deploy: ver nota de precisión |
 | ¿Cómo se autoriza? | Igual que `routine.js`: `authenticate(request)` → `userId`, y **service role + filtro manual `.eq('user_id', userId)`**, no RLS ni JWT por request (decisión 6). Nunca confiar en RLS desde una Function |
 | Rate limiting | Reusa `checkRateLimit(userId)` sin cambios. Mismo bucket de 60 req/min por usuario, compartido con `/routine` — no se le da presupuesto propio a progreso |
 | Fuente de "días completados" | Tabla **`history`**, contando **fechas distintas, no filas** — una misma fecha puede tener 2 filas si se completaron 2 días de rutina ese día (ya documentado en `etapa-10-analisis.md` y resuelto por `countDistinctDays`) |
@@ -95,40 +95,35 @@ async function buildRegistry() {
 }
 ```
 
-## Nota de precisión: firma del handler y CORS
+## Nota de precisión: firma del handler y por qué el nombre va en la query
 
-- Las Functions actuales usan `export default async (request) => {...}`
-  con **un solo argumento**. `progress-exercise.js` necesita el
-  **segundo**: `async (request, context)`, porque el nombre del ejercicio
-  llega en `context.params.name`.
-- `CORS_HEADERS` en `_lib/http.js` ya declara
-  `'Access-Control-Allow-Methods': 'GET, PUT, OPTIONS'`. **`GET` ya está
-  incluido — no hay que tocar ese archivo.** Se aclara para que nadie lo
-  "arregle" agregando un método que ya está.
-- El nombre del ejercicio viaja en la URL y tiene espacios y acentos
-  ("Press banca inclinado"). **La Function TIENE que decodificar a mano.**
-  Verificado contra producción, no contra la documentación: el handler
-  recibe `context.params.name` **percent-encoded**
-  (`Press%20banca%20con%20barra`), no decodificado. Sin
-  `decodeURIComponent`, el match exacto falla para todo nombre con espacio
-  — o sea, para todos — y el endpoint devuelve `404 EXERCISE_NOT_FOUND`
-  siempre. El síntoma engaña: parece "no hay datos para ese ejercicio".
-
-  Envolver en `try/catch`: `decodeURIComponent` lanza `URIError` con una
-  secuencia mal formada (`%ZZ`, un `%` suelto), y sin capturarlo eso sale
-  como `500 INTERNAL_ERROR` en vez de un `400` limpio.
-
-  ```js
-  let exerciseName
-  try {
-    exerciseName = decodeURIComponent(context.params.name)
-  } catch {
-    throw new HttpError(400, 'INVALID_EXERCISE_NAME', 'El nombre del ejercicio en la URL está mal encodeado.')
-  }
-  ```
-
-  Quien consuma el endpoint igual tiene que encodear al armar la URL —
-  está anotado en el spec del repo del MCP. Las dos mitades hacen falta.
+- El nombre del ejercicio viaja en la URL y tiene espacios, acentos y
+  barras ("Press banca inclinado", "Remo en polea baja (agarre neutro)").
+  La primera versión usaba path param de Netlify
+  (`'/api/v1/progress/exercises/:name'`, handler de dos argumentos
+  `(request, context)`). Dos bugs de infraestructura, ambos verificados
+  contra producción (no contra la documentación):
+  1. **Netlify NO decodifica el path param**: el handler recibe
+     `context.params.name` percent-encoded (`Press%20banca`), y sin
+     `decodeURIComponent` el match exacto fallaba para todo nombre con
+     espacio. Se arregló decodificando a mano (400
+     `INVALID_EXERCISE_NAME` si la secuencia está mal formada).
+  2. **`%2F` no sobrevive al edge**: parte de los nodos normaliza `%2F` a
+     `/` antes de matchear la ruta — con 5 de 47 nombres con "/" en la
+     rutina real, el path ganaba un segmento, no matcheaba `:name` y
+     devolvía el HTML de "Page not found" de Netlify sin llegar nunca a
+     la Function (13 de 20 requests OK contra la misma URL). Esto **no**
+     se arregla decodificando: el request no llega al handler.
+- **Decisión final: el nombre va en la query**
+  (`GET /api/v1/progress/exercises?name=...`, handler de un solo
+  argumento como todas las Functions). En query, `URLSearchParams` ya
+  entrega el valor decodificado — sin `decodeURIComponent` a mano — y
+  `%2F` viaja sin que el edge lo toque. Quien consuma igual tiene que
+  encodear al armar la URL (está anotado en el spec del repo del MCP).
+- El cambio se hizo con el endpoint recién desplegado y sin consumidores
+  (las tools del MCP no están escritas), así que no necesitó `/api/v2`.
+- `CORS_HEADERS` en `_lib/http.js` ya declara `GET` — no hay que tocar
+  ese archivo.
 
 ## Fuera de alcance (pospuesto)
 
@@ -260,14 +255,14 @@ export const config = { path: '/api/v1/progress/summary' }
 ## `netlify/functions/progress-exercise.js` (nuevo)
 
 ```js
-export default async (request, context) => {
+export default async (request) => {
   // ... mismo preámbulo (OPTIONS, authenticate, checkRateLimit, 405)
-  const exerciseName = context.params.name
+  // name de la query (requerido, 400 INVALID_EXERCISE_NAME si falta)
   // select a training_sessions (rango) + exercise_benchmarks (sin rango)
   // buildExerciseSeries(...) -> null => 404 EXERCISE_NOT_FOUND
 }
 
-export const config = { path: '/api/v1/progress/exercises/:name' }
+export const config = { path: '/api/v1/progress/exercises' }
 ```
 
 - Sin datos para ese nombre en el rango → `404 EXERCISE_NOT_FOUND`, y el
@@ -328,8 +323,9 @@ desplegado en producción, y está especificada en
 - [ ] Borrar `src/utils/statsAggregation.js` y actualizar los imports en
       `StatsView.jsx` y `ExerciseProgressChart.jsx`.
 - [ ] `netlify/functions/progress-summary.js`.
-- [ ] `netlify/functions/progress-exercise.js` (handler de **dos**
-      argumentos, `context.params.name`).
+- [ ] `netlify/functions/progress-exercise.js` (`?name=` en query, 400
+      `INVALID_EXERCISE_NAME` si falta; ver nota de precisión sobre por
+      qué no va en el path).
 - [ ] `_lib/openapiSpec.js` — dos paths nuevos + schemas, con
       `await import()` dinámico de `domain/progress.js`.
 - [ ] `docs/api.md` — documentar los dos endpoints, sus query params y
@@ -338,7 +334,10 @@ desplegado en producción, y está especificada en
 - [ ] `npm run lint && npm run build`.
 - [ ] Probar con `netlify dev` + `curl`: summary sin params, summary con
       rango, rango inválido (400), ejercicio existente, ejercicio
-      inexistente (404 con `availableExercises`), sin API Key (401).
+      inexistente (404 con `availableExercises`), sin `name` (400
+      `INVALID_EXERCISE_NAME`), ejercicio con "/" en el nombre
+      (`?name=Remo%20en%20polea%20baja%20(agarre%20neutro)` tiene que dar
+      200, no el HTML de Netlify), sin API Key (401).
 - [ ] Confirmar que la pantalla de estadísticas sigue funcionando igual
       después de mover el módulo (es el riesgo real del refactor, y no hay
       tests que lo cubran).
