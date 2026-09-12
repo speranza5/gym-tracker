@@ -40,6 +40,26 @@ export const RoutineInputSchema = z.object({
   days: z.array(DaySchema).min(1),
 })
 
+export const RoutineSummarySchema = z.object({
+  fileName: z.string().nullable(),
+  updatedAt: z.string().nullable(),
+  dayCount: z.number().int().nonnegative(),
+  exerciseCount: z.number().int().nonnegative(),
+  blocks: z.array(
+    z.object({
+      name: z.string().nullable(),
+      exerciseCount: z.number().int().nonnegative(),
+    })
+  ),
+  days: z.array(
+    z.object({
+      id: z.string(),
+      name: z.string(),
+      exerciseCount: z.number().int().nonnegative(),
+    })
+  ),
+})
+
 /**
  * Normaliza un nombre de ejercicio para usarlo como clave de matching (ej.
  * benchmarks de peso) entre subidas de Excel distintas, donde el `id` del
@@ -93,6 +113,48 @@ export function normalizeRoutine(input) {
   const result = RoutineInputSchema.safeParse(input)
   if (!result.success) throw new RoutineValidationError(formatZodError(result.error))
   return result.data
+}
+
+/**
+ * Resume una rutina a conteos + bloques + detalle por día. Pura: recibe
+ * el DTO ya leído, no sabe de dónde vino (API vía service role o, a
+ * futuro, otro transporte). Los ejercicios sin block van en un bucket con
+ * name null para que la suma de bloques siempre coincida con el total.
+ * @param {{fileName: string|null, days: Array<{id: string, name: string, exercises: Array<{block?: string}>}>, updatedAt?: string|null}} routine
+ */
+export function summarizeRoutine(routine) {
+  const days = routine.days ?? []
+  const blocks = []
+  const blockIndex = new Map()
+  let exerciseCount = 0
+
+  for (const day of days) {
+    const exercises = day.exercises ?? []
+    for (const exercise of exercises) {
+      exerciseCount += 1
+      const raw = typeof exercise.block === 'string' ? exercise.block.trim() : ''
+      const name = raw === '' ? null : raw
+      // Map acepta null como clave: el bucket "sin bloque" es uno solo.
+      if (!blockIndex.has(name)) {
+        blockIndex.set(name, blocks.length)
+        blocks.push({ name, exerciseCount: 0 })
+      }
+      blocks[blockIndex.get(name)].exerciseCount += 1
+    }
+  }
+
+  return {
+    fileName: routine.fileName ?? null,
+    updatedAt: routine.updatedAt ?? null,
+    dayCount: days.length,
+    exerciseCount,
+    blocks,
+    days: days.map((day) => ({
+      id: day.id,
+      name: day.name,
+      exerciseCount: (day.exercises ?? []).length,
+    })),
+  }
 }
 
 /**

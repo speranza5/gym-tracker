@@ -63,7 +63,7 @@ OpenAPI generado desde los mismos schemas de Zod que valida la API
 pre-autenticado con la API Key real del usuario. Ver
 [`api.md`](./api.md#documentación-interactiva) y `decisions.md` #11/#12.
 
-## Etapa 6 — Endpoints adicionales de la API 🔜
+## Etapa 6 — Endpoints adicionales de la API ✅
 
 - `GET /api/v1/routine/summary` — resumen de la rutina (cantidad de días,
   ejercicios, bloques). Requiere escribir la función de resumen en

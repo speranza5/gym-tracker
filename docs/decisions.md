@@ -588,3 +588,56 @@ tour de 3 pasos sobre tarjetas que ya existen.
 - `WelcomeTour` recibe `shouldMark` además de `run`: la escritura del flag
   la origina solo el camino de primera vez, el link "Ver tutorial de
   nuevo" re-muestra sin escribir (ver análisis de la etapa).
+
+---
+
+## 18. Etapa 6: summary, validate con 200 y regen como endpoint interno
+
+**Contexto:** la Etapa 6 (ver
+[`etapa-6-analisis.md`](./etapa-6-analisis.md)) cierra los tres huecos que
+`api.md` prometía: `GET /api/v1/routine/summary`, `POST
+/api/v1/routine/validate` y regeneración de API Key (que obligaba a
+revisar esta ADR #7).
+
+**Decisiones:**
+
+1. **Summary** (`summarizeRoutine` en `src/domain/routine.js`):
+   `{fileName, updatedAt, dayCount, exerciseCount, blocks:
+   [{name, exerciseCount}], days: [{id, name, exerciseCount}]}`. Los
+   ejercicios sin block van en un bucket `{name: null}` para preservar el
+   invariante `sum(blocks) === exerciseCount` (ver spec). Sin rutina →
+   `404 ROUTINE_NOT_FOUND` igual que el GET — intencionalmente distinto
+   del `/progress/summary` de la Etapa 16 (200 con ceros): no tener rutina
+   es ausencia del recurso, no haber entrenado es un cero legítimo.
+2. **Validate con 200 en vez de 400.** Una rutina inválida no es un error
+   HTTP: la validación funcionó y la respuesta es "no"
+   (`{valid: false, issues}`). El 400 queda solo para body inparseable.
+   Motivo: el cliente MCP lanza en cualquier `!ok` y marca la tool como
+   error — con 400 el LLM leería "falló" cuando la validación funcionó.
+   No se dejó en 400 por simetría con el PUT: la simetría mentía sobre el
+   significado del status.
+3. **Regen como endpoint interno** (`POST /internal/api-key/regenerate`),
+   fuera de `/api/v1` y del spec de OpenAPI. Se evaluó primero un POST
+   público y se descartó: el Playground pre-autenticado (ADR #12)
+   invitaría a rotar la key con un "Try it", rompiendo su propia pre-auth
+   sin confirmación. Se autentica con la sesión de Supabase (mismo patrón
+   que `mcp-identity.js`), no con la key — rotar es el mecanismo de
+   recuperación ante una key comprometida, así que pedir prueba de cuenta
+   en vez de prueba de lo robado es la semántica correcta. Un solo update
+   atómico: sin período de gracia ni convivencia de keys.
+4. **Revisión de ADR #7: texto plano consciente, no hash-only.**
+   Regenerar elimina el bloqueo original (sin regenerar, hash-only dejaba
+   al usuario sin forma de recuperar su key), pero hash-only ahora
+   rompería `mcp-api-key.js` — devuelve la key real server-to-server, y
+   con solo el hash eso es imposible. Migrar queda supeditado al rediseño
+   de la auth del MCP (otro repo), no a esta etapa. `authenticate()`
+   sigue comparando texto plano.
+
+**Consecuencias:**
+- `_lib/http.js` suma `POST` a `Access-Control-Allow-Methods` (faltaba —
+  `validate` lo necesita desde browsers).
+- El botón "Regenerar" en OpenTracker advierte las dos consecuencias
+  cruzadas: la MCP remota se recupera sola, el stdio de Claude Desktop se
+  rompe hasta actualizar `GYM_TRACKER_API_KEY` a mano.
+- Los DTOs de summary/validate son contrato público (los espeja
+  `gym-tracker-mcp`): no cambian sin versionar después del deploy.
