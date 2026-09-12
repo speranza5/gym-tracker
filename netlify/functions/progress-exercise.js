@@ -16,8 +16,14 @@ export default async (request, context) => {
       throw new HttpError(405, 'METHOD_NOT_ALLOWED', `Método ${request.method} no soportado en este endpoint.`)
     }
 
-    // Netlify entrega el path param ya decodificado (espacios, acentos).
-    const exerciseName = context.params.name
+    // Netlify NO decodifica el path param: llega percent-encoded
+    // (verificado contra producción, no contra la doc).
+    let exerciseName
+    try {
+      exerciseName = decodeURIComponent(context.params.name)
+    } catch {
+      throw new HttpError(400, 'INVALID_EXERCISE_NAME', 'El nombre del ejercicio en la URL está mal encodeado.')
+    }
     const { from, to } = parseRange(request.url)
     const admin = getSupabaseAdmin()
 

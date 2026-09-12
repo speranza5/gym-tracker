@@ -681,5 +681,6 @@ usada solo por el frontend — una inconsistencia contra la decisión 10
   puede ser `null`; sin datos el summary es 200 con ceros (ver nota
   anti-armonización de la Etapa 6).
 - `progress-exercise.js` es la primera Function con handler de dos
-  argumentos (`request, context`) — `context.params.name` llega ya
-  decodificado.
+  argumentos (`request, context`) — `context.params.name` llega
+  percent-encoded y la Function lo decodifica con `decodeURIComponent`
+  (400 `INVALID_EXERCISE_NAME` si está mal formado).

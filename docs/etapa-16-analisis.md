@@ -106,10 +106,29 @@ async function buildRegistry() {
   incluido — no hay que tocar ese archivo.** Se aclara para que nadie lo
   "arregle" agregando un método que ya está.
 - El nombre del ejercicio viaja en la URL y tiene espacios y acentos
-  ("Press banca inclinado"). La Function **no** necesita decodificar a
-  mano: Netlify entrega `context.params.name` ya decodificado. Quien
-  consuma el endpoint sí tiene que encodear — está anotado en el spec del
-  repo del MCP.
+  ("Press banca inclinado"). **La Function TIENE que decodificar a mano.**
+  Verificado contra producción, no contra la documentación: el handler
+  recibe `context.params.name` **percent-encoded**
+  (`Press%20banca%20con%20barra`), no decodificado. Sin
+  `decodeURIComponent`, el match exacto falla para todo nombre con espacio
+  — o sea, para todos — y el endpoint devuelve `404 EXERCISE_NOT_FOUND`
+  siempre. El síntoma engaña: parece "no hay datos para ese ejercicio".
+
+  Envolver en `try/catch`: `decodeURIComponent` lanza `URIError` con una
+  secuencia mal formada (`%ZZ`, un `%` suelto), y sin capturarlo eso sale
+  como `500 INTERNAL_ERROR` en vez de un `400` limpio.
+
+  ```js
+  let exerciseName
+  try {
+    exerciseName = decodeURIComponent(context.params.name)
+  } catch {
+    throw new HttpError(400, 'INVALID_EXERCISE_NAME', 'El nombre del ejercicio en la URL está mal encodeado.')
+  }
+  ```
+
+  Quien consuma el endpoint igual tiene que encodear al armar la URL —
+  está anotado en el spec del repo del MCP. Las dos mitades hacen falta.
 
 ## Fuera de alcance (pospuesto)
 

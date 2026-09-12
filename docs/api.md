@@ -429,6 +429,7 @@ Efectos de regenerar:
 |--------|-----------------------|---------------|
 | 400    | `INVALID_ROUTINE`      | El body del `PUT` no tiene la forma esperada (ver `issues` para el detalle), o el body del `POST .../validate` ni siquiera es JSON válido. |
 | 400    | `INVALID_RANGE`        | `from`/`to` de progreso con formato inválido, rango parcial, o `from` posterior a `to`. |
+| 400    | `INVALID_EXERCISE_NAME` | El path param del ejercicio está mal encodeado en la URL. |
 | 401    | `UNAUTHORIZED`         | Falta el header `Authorization`, o la API Key no es válida. |
 | 404    | `ROUTINE_NOT_FOUND`    | `GET` o `GET .../summary` de un usuario que todavía no cargó ninguna rutina. |
 | 404    | `EXERCISE_NOT_FOUND`   | Sin datos para ese nombre de ejercicio en el rango (ver `availableExercises` para reintentar). |
