@@ -1019,6 +1019,26 @@
   opacity: 0.6;
 }
 
+.open-tracker__regenerate {
+  align-self: flex-start;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 14px;
+  border-radius: var(--radius-sm);
+}
+
+.open-tracker__regenerate:active {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.open-tracker__regenerate:disabled {
+  opacity: 0.6;
+}
+
 .open-tracker__error {
   color: var(--danger);
   font-size: 13px;

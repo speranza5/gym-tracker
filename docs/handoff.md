@@ -62,18 +62,12 @@ frontend.
 | Endpoints internos para `gym-tracker-mcp` (identidad + resolución de API Key) | ✅ | `netlify/functions/mcp-identity.js`, `mcp-api-key.js`, `_lib/apiKeys.js` |
 | Guía "Conectar MCP" en Open Tracker (pasos para Claude y ChatGPT) | ✅ | `src/components/openTracker/ConnectMcp.jsx` |
 | Welcome tour de primer login (spotlight sobre el empty state, una sola vez, tabla `profiles`) | ✅ | `src/components/WelcomeTour.jsx` (`react-joyride`), `src/utils/profile.js`, `src/components/FileUpload.jsx` |
+| **Open Tracker — `GET /api/v1/routine/summary`** | ✅ | `netlify/functions/routine-summary.js`, `summarizeRoutine` en `src/domain/routine.js` |
+| **Open Tracker — `POST /api/v1/routine/validate`** | ✅ | `netlify/functions/routine-validate.js` (`200 {valid}` en vez de 400, ver `decisions.md` #18) |
+| Regeneración de API Key (endpoint interno + botón en Open Tracker) | ✅ | `netlify/functions/api-key-regenerate.js`, `src/utils/apiKeyRegen.js` |
 
 ## Funcionalidades pendientes (explícitamente fuera de alcance hasta ahora)
 
-- `GET /api/v1/routine/summary` — no implementado. La arquitectura ya lo
-  soporta: sería una Function nueva que llame a una función de resumen en
-  `src/domain/routine.js` (esa función de resumen tampoco existe todavía,
-  hay que escribirla).
-- `POST /api/v1/routine/validate` — no implementado, pero trivial: envolver
-  `assertValidRoutine` (ya existe) en una Function nueva. También trivial
-  de documentar en el spec de OpenAPI (`_lib/openapiSpec.js`) y de exponer
-  en el Playground una vez que exista la Function.
-- Regeneración de API Key.
 - Migrar el frontend para que consuma su propia API en vez de hablar
   directo con Supabase (ver decisión 9 en `decisions.md`).
 - Tests automatizados (no hay ninguno todavía).
@@ -94,7 +88,9 @@ Resumen — el detalle completo con alternativas y motivos está en
 6. La API usa la *service role key* de Supabase + autorización manual, no
    RLS ni JWTs por request.
 7. La API Key se guarda en texto plano (protegida por RLS), no hasheada —
-   **decisión a revisar el día que se implemente "regenerar"**.
+   revisada en la Etapa 6 y mantenida a conciencia: con regenerar ya hay
+   salida ante compromiso, y hash-only queda supeditado al rediseño del
+   MCP (ver `decisions.md` #18).
 8. Rate limiting respaldado en una tabla de Postgres, no en memoria.
 9. El frontend **no** consume todavía su propia API — sigue yendo directo
    a Supabase. Es intencional, no un olvido.
@@ -156,10 +152,11 @@ Resumen — el detalle completo con alternativas y motivos está en
 - **Dos caminos de escritura a la tabla `routines`** (frontend vía RLS, API
   vía service role) — aceptado como trade-off (decisión 9), pero es
   duplicación de *código de acceso a datos* (no de lógica de dominio).
-- **API Key en texto plano** — aceptable para v1 sin "regenerar", pero
-  debería migrar a hash-only cuando se implemente esa funcionalidad
-  (decisión 7).
-- **Sin regeneración ni expiración de API Keys.**
+- **API Key en texto plano** — revisada en la Etapa 6 y mantenida a
+  conciencia (con regenerar ya hay salida ante compromiso; hash-only queda
+  supeditado al rediseño del MCP, ver `decisions.md` #18).
+- **Sin expiración de API Keys** (regeneración manual sí existe desde la
+  Etapa 6).
 - **Rate limiting simple** (ventana fija, no sliding window) — puede
   permitir ráfagas de hasta 2x el límite justo en el borde de una ventana.
 - **`src/domain/routine.js` se reescribió con Zod sin tests automatizados
@@ -183,12 +180,9 @@ completo):
 
 1. Evaluar agregar tests mínimos para `src/domain/routine.js` (es la pieza
    más crítica y más fácil de testear por ser funciones puras).
-2. Implementar `POST /api/v1/routine/validate` (bajo esfuerzo, reusa
-   `assertValidRoutine`).
-3. Implementar `GET /api/v1/routine/summary` (requiere escribir la función
-   de resumen en el dominio primero) y `validate`/`summary` en
-   `gym-tracker-mcp` una vez que existan acá.
-4. Confirmar en el dashboard de Supabase que
+2. Implementar `validate`/`summary` en `gym-tracker-mcp` (los endpoints ya
+   existen acá desde la Etapa 6).
+3. Confirmar en el dashboard de Supabase que
    `https://gym-tracker-mcp.netlify.app/oauth/authorize` está en la lista
    de Redirect URLs permitidas (Auth → URL Configuration) — sin eso, el
    login con Google del conector remoto no completa el flujo.

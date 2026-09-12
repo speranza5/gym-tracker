@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect, useState } from 'react'
 import { ChevronLeft, Copy, Check, Plug, BookOpen, FileText, Rocket, Bot } from 'lucide-react'
 import { getOrCreateApiKey } from '../utils/apiKeys'
+import { regenerateApiKey } from '../utils/apiKeyRegen'
 import { QuickStart } from './openTracker/QuickStart'
 import { ConnectMcp } from './openTracker/ConnectMcp'
 
@@ -53,6 +54,7 @@ export function OpenTracker({ user, onBack }) {
   const [apiKey, setApiKey] = useState(null)
   const [error, setError] = useState('')
   const [view, setView] = useState('hub')
+  const [regenerating, setRegenerating] = useState(false)
 
   const baseUrl = `${window.location.origin}/api/v1`
 
@@ -70,6 +72,23 @@ export function OpenTracker({ user, onBack }) {
     }
   }, [user.id])
 
+  const handleRegenerate = async () => {
+    const confirmed = window.confirm(
+      '¿Regenerar tu API Key? La anterior deja de funcionar de inmediato en todas las integraciones que la usen. ' +
+        'La conexión MCP remota se recupera sola, pero si usás el MCP en Claude Desktop tenés que actualizar GYM_TRACKER_API_KEY en su config a mano.'
+    )
+    if (!confirmed) return
+    setRegenerating(true)
+    setError('')
+    try {
+      const key = await regenerateApiKey()
+      setApiKey(key)
+    } catch {
+      setError('No se pudo regenerar tu API Key. Probá de nuevo en un momento.')
+    } finally {
+      setRegenerating(false)
+    }
+  }
   if (view === 'quickstart') {
     return <QuickStart baseUrl={baseUrl} apiKey={apiKey} onBack={() => setView('hub')} />
   }
@@ -119,6 +138,14 @@ export function OpenTracker({ user, onBack }) {
           <CopyField label="API Base URL" value={baseUrl} />
           <CopyField label="API Key" value={apiKey} placeholder={error ? '—' : 'Generando...'} />
           {error && <p className="open-tracker__error">{error}</p>}
+          <button
+            type="button"
+            className="open-tracker__regenerate"
+            onClick={handleRegenerate}
+            disabled={!apiKey || regenerating}
+          >
+            {regenerating ? 'Regenerando…' : 'Regenerar API Key'}
+          </button>
         </section>
 
         <section className="open-tracker__section">

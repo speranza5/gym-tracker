@@ -39,8 +39,9 @@ pero con tu Base URL y tu API Key reales ya completadas.
 ## Autenticación
 
 Cada usuario de Gym Tracker tiene una única API Key (visible en la app, menú
-lateral → **Open Tracker**, una vez logueado). No expira todavía; tampoco
-hay endpoint de regeneración en esta versión.
+lateral → **Open Tracker**, una vez logueado). No expira; se puede regenerar
+desde esa misma pantalla (botón "Regenerar API Key", con confirmación) — ver
+[Regeneración de API Key](#regeneración-de-api-key).
 
 Se envía en cada request como header `Authorization`:
 
@@ -200,14 +201,132 @@ curl -X PUT https://gym-tracker.carlossperanza.fyi/api/v1/routine \
 }
 ```
 
+### `GET /api/v1/routine/summary`
+
+Devuelve un resumen liviano de la rutina: conteos, bloques y detalle por
+día, sin el detalle ejercicio por ejercicio. Pensado para "¿qué tengo?"
+sin bajar el DTO completo.
+
+**Propósito:** que un agente o integración conozca la forma de la rutina
+(para después pedir el detalle con `GET`, o validar un reemplazo con
+`POST .../validate`) con una respuesta chica.
+
+**Autenticación:** requerida (`Authorization: Bearer <api_key>`).
+
+**Parámetros:** ninguno (ni query params ni body). El usuario se resuelve
+100% a partir de la API Key.
+
+**Request**
+
+```bash
+curl https://gym-tracker.carlossperanza.fyi/api/v1/routine/summary \
+  -H "Authorization: Bearer gt_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+```
+
+**Response `200 OK`**
+
+```json
+{
+  "fileName": "rutina.xlsx",
+  "updatedAt": "2026-07-26T14:32:10.000Z",
+  "dayCount": 3,
+  "exerciseCount": 18,
+  "blocks": [
+    { "name": "Tren superior", "exerciseCount": 8 },
+    { "name": null, "exerciseCount": 2 }
+  ],
+  "days": [
+    { "id": "d0", "name": "Día 1", "exerciseCount": 6 }
+  ]
+}
+```
+
+- `blocks` agrupa por bloque en orden de primera aparición; `name: null`
+  es el bucket de ejercicios sin bloque (el campo es opcional). La suma de
+  `blocks[].exerciseCount` siempre coincide con `exerciseCount`.
+- `days[].exerciseCount` es la cantidad de ejercicios de ese día.
+
+**Response `404 Not Found`** — igual que el `GET`: el usuario todavía no
+cargó ninguna rutina. A propósito distinto del `/progress/summary` de
+progreso (ver [`etapa-6-analisis.md`](./etapa-6-analisis.md#nota-anti-armonización-404-acá-200-con-ceros-en-la-etapa-16)):
+no tener rutina es la ausencia del recurso; no haber entrenado todavía es
+un cero legítimo.
+
+### `POST /api/v1/routine/validate`
+
+Valida un payload de rutina **sin guardarlo**. Mismo body que el `PUT`,
+misma función de dominio (`assertValidRoutine`) — la diferencia es que
+nunca escribe.
+
+**Propósito:** que un asistente verifique un payload antes de reemplazar
+la rutina real con `PUT` (o corrija y reintente, usando `issues`).
+
+**Autenticación:** requerida (`Authorization: Bearer <api_key>`).
+
+**Parámetros:** body JSON, `Content-Type: application/json`, con la misma
+forma que el `PUT` (`fileName` opcional, `days` requerido no vacío).
+
+**Request**
+
+```bash
+curl -X POST https://gym-tracker.carlossperanza.fyi/api/v1/routine/validate \
+  -H "Authorization: Bearer gt_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "fileName": "rutina-borrador.xlsx",
+    "days": [{ "id": "d0", "name": "Día 1", "exercises": [] }]
+  }'
+```
+
+**Response `200 OK`, rutina válida**
+
+```json
+{ "valid": true }
+```
+
+**Response `200 OK`, rutina inválida** — a propósito no es un 400: la
+validación funcionó y la respuesta es "no" (un 400 significaría "me negué
+a hacerlo", y los clientes MCP marcan cualquier `!ok` como error de la
+tool). Ver [`etapa-6-analisis.md`](./etapa-6-analisis.md#nota-de-precisión-por-qué-validate-no-usa-400):
+
+```json
+{
+  "valid": false,
+  "issues": ["days[0]: ..."]
+}
+```
+
+**Response `400 Bad Request`** — solo si el body ni siquiera es JSON
+válido (`INVALID_ROUTINE`, igual que el `PUT`).
+
+### Regeneración de API Key
+
+No es un endpoint público: es un flujo desde la app (menú lateral →
+**Open Tracker** → **Regenerar API Key**, con confirmación). Por detrás
+llama a `POST /internal/api-key/regenerate`, un endpoint interno fuera de
+`/api/v1` y del spec de OpenAPI — a propósito, para que el Playground no
+ofrezca rotar la key con un "Try it" (ver
+[`etapa-6-analisis.md`](./etapa-6-analisis.md#nota-de-precisión-por-qué-regen-no-entra-a-openapi)).
+Se autentica con la sesión de Supabase del navegador, no con la API Key.
+
+Efectos de regenerar:
+
+- La key anterior deja de funcionar **de inmediato** en todas las
+  integraciones que la usen (una sola key activa por usuario, sin período
+  de gracia).
+- La conexión MCP **remota** se recupera sola (resuelve la key
+  just-in-time por usuario).
+- El transporte MCP **stdio** (Claude Desktop) se rompe hasta actualizar
+  `GYM_TRACKER_API_KEY` en su config a mano.
+
 ## Códigos de error
 
 | Status | Code                  | Cuándo ocurre |
 |--------|-----------------------|---------------|
-| 400    | `INVALID_ROUTINE`      | El body del `PUT` no tiene la forma esperada (ver `issues` para el detalle). |
+| 400    | `INVALID_ROUTINE`      | El body del `PUT` no tiene la forma esperada (ver `issues` para el detalle), o el body del `POST .../validate` ni siquiera es JSON válido. |
 | 401    | `UNAUTHORIZED`         | Falta el header `Authorization`, o la API Key no es válida. |
-| 404    | `ROUTINE_NOT_FOUND`    | `GET` de un usuario que todavía no cargó ninguna rutina. |
-| 405    | `METHOD_NOT_ALLOWED`   | Método HTTP distinto de `GET`/`PUT`/`OPTIONS` sobre este endpoint. |
+| 404    | `ROUTINE_NOT_FOUND`    | `GET` o `GET .../summary` de un usuario que todavía no cargó ninguna rutina. |
+| 405    | `METHOD_NOT_ALLOWED`   | Método HTTP no soportado sobre el endpoint (cada endpoint acepta el suyo más `OPTIONS`). |
 | 429    | `RATE_LIMITED`         | Se superó el límite de requests por minuto (ver abajo). Header `Retry-After: 60`. |
 | 500    | `INTERNAL_ERROR`       | Error inesperado del servidor. |
 
@@ -245,16 +364,11 @@ para tráfico de producción a gran escala.
   acceder directamente a la base de datos.
 - **Todo lo que necesita el MCP para funcionar es la Base URL + una API
   Key** — no hace falta inspeccionar el código de este repo.
-- **Endpoints todavía no implementados, pero con la arquitectura lista:**
-  - `GET /api/v1/routine/summary` — resumen de la rutina (cantidad de días,
-    ejercicios, etc.).
+- **Endpoints implementados que el MCP usa (o va a usar):**
+  - `GET /api/v1/routine/summary` — resumen de la rutina (conteos,
+    bloques, detalle por día). Lo consume `getRoutineSummary`.
   - `POST /api/v1/routine/validate` — valida un payload de rutina sin
-    guardarlo (usa la misma función de dominio `assertValidRoutine` que ya
-    corre internamente en el `PUT`).
-
-  Agregarlos es sumar un archivo nuevo en `netlify/functions/` que llame a
-  la función de dominio correspondiente en `src/domain/routine.js` — la
-  misma capa de dominio que ya usan el importador de Excel y `PUT
-  /api/v1/routine` hoy.
+    guardarlo (misma `assertValidRoutine` que corre internamente el
+    `PUT`). Lo consume `validateRoutine`.
 - **CORS:** habilitado para cualquier origen (`Access-Control-Allow-Origin: *`),
   pensado para integraciones desde cualquier cliente (apps, SDKs, browser).

@@ -12,7 +12,9 @@ extendZodWithOpenApi(z)
 let registryPromise = null
 
 async function buildRegistry() {
-  const { ExerciseSchema, DaySchema, RoutineInputSchema } = await import('../../../src/domain/routine.js')
+  const { ExerciseSchema, DaySchema, RoutineInputSchema, RoutineSummarySchema } = await import(
+    '../../../src/domain/routine.js'
+  )
 
   const registry = new OpenAPIRegistry()
 
@@ -25,6 +27,16 @@ async function buildRegistry() {
   registry.register('Exercise', ExerciseSchema)
   registry.register('Day', DaySchema)
   registry.register('RoutineInput', RoutineInputSchema)
+  registry.register('RoutineSummary', RoutineSummarySchema)
+
+  const ValidateResponseSchema = z
+    .object({
+      valid: z.boolean().openapi({ example: true }),
+      issues: z.array(z.string()).optional().openapi({
+        example: ['days[2].exercises[0]: Required'],
+      }),
+    })
+    .openapi('ValidateResponse')
 
   const RoutineResponseSchema = RoutineInputSchema.extend({
     updatedAt: z.string().nullable().openapi({ example: '2026-07-26T14:32:10.000Z' }),
@@ -79,6 +91,46 @@ async function buildRegistry() {
         content: { 'application/json': { schema: RoutineResponseSchema } },
       },
       400: errorResponse('El body no tiene la forma de una rutina válida (ver `issues`).'),
+      401: errorResponse('Falta el header Authorization, o la API Key no es válida.'),
+      429: errorResponse('Se superó el límite de requests por minuto.'),
+    },
+  })
+
+  registry.registerPath({
+    method: 'get',
+    path: '/api/v1/routine/summary',
+    summary: 'Obtener un resumen de la rutina del usuario autenticado',
+    tags: ['Routine'],
+    security: [{ [bearerAuth.name]: [] }],
+    responses: {
+      200: {
+        description: 'Conteos, bloques y detalle por día de la rutina.',
+        content: { 'application/json': { schema: RoutineSummarySchema } },
+      },
+      401: errorResponse('Falta el header Authorization, o la API Key no es válida.'),
+      404: errorResponse('El usuario todavía no cargó ninguna rutina.'),
+      429: errorResponse('Se superó el límite de requests por minuto.'),
+    },
+  })
+
+  registry.registerPath({
+    method: 'post',
+    path: '/api/v1/routine/validate',
+    summary: 'Validar un payload de rutina sin guardarlo',
+    tags: ['Routine'],
+    security: [{ [bearerAuth.name]: [] }],
+    request: {
+      body: {
+        content: { 'application/json': { schema: RoutineInputSchema } },
+      },
+    },
+    responses: {
+      200: {
+        description:
+          'La validación funcionó. `valid: true` si el payload es una rutina válida, `valid: false` con el detalle en `issues` si no lo es.',
+        content: { 'application/json': { schema: ValidateResponseSchema } },
+      },
+      400: errorResponse('El body no es JSON válido.'),
       401: errorResponse('Falta el header Authorization, o la API Key no es válida.'),
       429: errorResponse('Se superó el límite de requests por minuto.'),
     },

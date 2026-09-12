@@ -3,7 +3,7 @@ import { getSupabaseAdmin } from './supabaseAdmin.js'
 
 const KEY_PREFIX = 'gt_live_'
 
-function generateApiKey() {
+export function generateApiKey() {
   return `${KEY_PREFIX}${randomBytes(20).toString('hex')}`
 }
 
